@@ -7,7 +7,7 @@ dotenv.config();
 
 const seedRecipes = async () => {
   try {
-    await mongoose.connect('mongodb+srv://codethebug3:backend@cluster0.wmjgb.mongodb.net/?retryWrites=true&w=majority');
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log("Connected");
     
 
