@@ -1,0 +1,242 @@
+openapi: 3.0.0
+info:
+  title: New Backend API
+  version: 1.0.0
+  description: API documentation for your new backend project
+
+servers:
+  - url: http://localhost:5000
+
+paths:
+  /signup:
+    post:
+      summary: User signup
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                  example: johndoe
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  format: password
+                  example: strongPassword123
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User registered successfully
+        '400':
+          description: Bad request
+
+  /login:
+    post:
+      summary: User login
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  format: password
+                  example: strongPassword123
+      responses:
+        '200':
+          description: Login successful, token set in cookie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 60a7c1b2a85d4b3b2c8c9c9d
+                      username:
+                        type: string
+                        example: johndoe
+                      email:
+                        type: string
+                        format: email
+                        example: john@example.com
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                        example: ["user"]
+                      profile:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            example: John Doe
+                          avatarUrl:
+                            type: string
+                            example: https://example.com/avatar.jpg
+        '401':
+          description: Invalid email or password
+
+  /logout:
+    post:
+      summary: User logout
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Logout successful
+
+  /update-profile:
+    put:
+      summary: Update user's profile picture
+      tags:
+        - User
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - profilePic
+              properties:
+                profilePic:
+                  type: string
+                  description: Base64 or URL of the profile picture to upload
+                  example: https://example.com/new-avatar.jpg
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Profile updated successfully
+                  user:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                        example: 60a7c1b2a85d4b3b2c8c9c9d
+                      username:
+                        type: string
+                        example: johndoe
+                      email:
+                        type: string
+                        example: john@example.com
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                        example: ["user"]
+                      profile:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            example: John Doe
+                          avatarUrl:
+                            type: string
+                            example: https://example.com/new-avatar.jpg
+
+        '400':
+          description: Bad request (e.g., missing profilePic)
+        '401':
+          description: Unauthorized
+
+  /check:
+    get:
+      summary: Check authentication and get user details
+      tags:
+        - Auth
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Authenticated user details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                    example: 60a7c1b2a85d4b3b2c8c9c9d
+                  username:
+                    type: string
+                    example: johndoe
+                  email:
+                    type: string
+                    example: john@example.com
+                  roles:
+                    type: array
+                    items:
+                      type: string
+                    example: ["user"]
+                  profile:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: John Doe
+                      avatarUrl:
+                        type: string
+                        example: https://example.com/avatar.jpg
+        '401':
+          description: Not authenticated
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: jwt

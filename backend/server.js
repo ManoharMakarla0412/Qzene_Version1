@@ -2,11 +2,18 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const connectDB = require("./config/db.config");
+const authRoutes = require("./routes/auth.routes");
+const cookieParser = require("cookie-parser");
+const swaggerUi = require("swagger-ui-express");
+const YAML = require("yamljs");
+const path = require("path");
 const recipeRoutes = require('./routes/recipe.routes');
 
 dotenv.config();
 
 const app = express();
+const swaggerDocument = YAML.load(path.join(process.cwd(), "swagger", "swagger.yaml"));
 const PORT = process.env.PORT || 5001;
 
 // Updated CORS configuration
@@ -48,13 +55,23 @@ app.use(cors({
 
 // Increase payload limit for image uploads
 app.use(express.json({ limit: '50mb' }));
+app.use(cookieParser({ maxAge : 24 * 60 * 60 * 1000}));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+
 
 // Pre-flight requests
 app.options('*', cors());
 
 // Routes
 app.use('/api', recipeRoutes);
+
+// Swagger UI Route
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// API Routes
+app.use("/api/auth", authRoutes);
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -67,17 +84,19 @@ app.use((err, req, res, next) => {
   }
 });
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch((err) => console.error('❌ MongoDB connection error:', err));
-
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
+  connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running at http://localhost:${PORT}`);
+      console.log(`Swagger UI available at http://localhost:${PORT}/api-docs`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to database:", err);
+  });
 });
 
 module.exports = app;
