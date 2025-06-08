@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { recipes, cuisines } from "@/data/recipes";
+import { useEffect, useState } from "react";
+import { Recipe, DifficultyLevel, Category  } from "@/types";
 import { CuisineType, DeviceSupport } from "@/types";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -9,65 +9,107 @@ import CuisineFilter from "@/components/CuisineFilter";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { log } from "console";
 
 const AllRecipes = () => {
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCuisine, setSelectedCuisine] = useState<CuisineType | null>(null);
   const [selectedDevice, setSelectedDevice] = useState<DeviceSupport | null>(null);
   const [cookingTimeRange, setCookingTimeRange] = useState([0, 120]);
   const [difficulty, setDifficulty] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
+
+ useEffect(() => {
+  const fetchRecipes = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/recipes");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setRecipes(data.data);
+      } else {
+        console.error("No valid recipe array found", data);
+      }
+    } catch (err) {
+      console.error("Error fetching recipes:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchRecipes();
+}, []);
+  const cuisineOptions = Array.from(new Set(recipes.map(r => r.cuisine))).sort();
+  const difficultyOptions = Array.from(new Set(recipes.map(r => r.difficulty))).sort();
+  const categoryOptions = Array.from(new Set(recipes.map(r => r.category).filter(Boolean))).sort();
+
   
   // Filter recipes based on all filters
   const filteredRecipes = recipes.filter(recipe => {
-    // Filter by search query
-    if (searchQuery && 
-        !recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !recipe.cuisine.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !recipe.ingredients.some(ingredient => ingredient.toLowerCase().includes(searchQuery.toLowerCase()))
+  const query = searchQuery.toLowerCase();
+
+  // 🔍 Search Filter (name, cuisine, ingredients)
+  const matchesSearch =
+    recipe.name.toLowerCase().includes(query) ||
+    recipe.cuisine.toLowerCase().includes(query) ||
+    recipe.ingredients.some(ingredient =>
+      ingredient.toLowerCase().includes(query)
+    );
+
+  if (searchQuery && !matchesSearch) {
+    return false;
+  }
+
+  // 🌍 Cuisine Filter
+  if (selectedCuisine && recipe.cuisine !== selectedCuisine) {
+    return false;
+  }
+
+  // 📱 Device Filter
+  if (selectedDevice) {
+    if (
+      (selectedDevice === 'Both' && recipe.deviceSupport !== 'Both') ||
+      (selectedDevice === 'MoMe' &&
+        recipe.deviceSupport !== 'MoMe' &&
+        recipe.deviceSupport !== 'Both') ||
+      (selectedDevice === 'Simmr' &&
+        recipe.deviceSupport !== 'Simmr' &&
+        recipe.deviceSupport !== 'Both')
     ) {
       return false;
     }
-    
-    // Filter by cuisine
-    if (selectedCuisine && recipe.cuisine !== selectedCuisine) {
-      return false;
-    }
-    
-    // Filter by device
-    if (selectedDevice) {
-      if (selectedDevice === 'Both' && recipe.deviceSupport !== 'Both') {
-        return false;
-      } else if (selectedDevice === 'MoMe' && recipe.deviceSupport !== 'MoMe' && recipe.deviceSupport !== 'Both') {
-        return false;
-      } else if (selectedDevice === 'Simmr' && recipe.deviceSupport !== 'Simmr' && recipe.deviceSupport !== 'Both') {
-        return false;
-      }
-    }
-    
-    // Filter by cooking time
-    if (recipe.cookingTime < cookingTimeRange[0] || recipe.cookingTime > cookingTimeRange[1]) {
-      return false;
-    }
-    
-    // Filter by difficulty
-    if (difficulty && recipe.difficulty !== difficulty) {
-      return false;
-    }
-    
-    return true;
-  });
-  
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-  
-  const handleResetFilters = () => {
-    setSelectedCuisine(null);
-    setSelectedDevice(null);
-    setCookingTimeRange([0, 120]);
-    setDifficulty(null);
-    setSearchQuery("");
-  };
+  }
+
+  // ⏲️ Cooking Time Filter
+  if (
+    recipe.cookingTime < cookingTimeRange[0] ||
+    recipe.cookingTime > cookingTimeRange[1]
+  ) {
+    return false;
+  }
+
+  // 🧩 Difficulty Filter
+  if (difficulty && recipe.difficulty !== difficulty) {
+    return false;
+  }
+
+  return true;
+});
+
+const handleSearch = (query: string) => {
+  setSearchQuery(query);
+};
+
+const handleResetFilters = () => {
+  setSelectedCuisine(null);
+  setSelectedDevice(null);
+  setCookingTimeRange([0, 120]);
+  setDifficulty(null);
+  setSearchQuery("");
+};
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -92,7 +134,6 @@ const AllRecipes = () => {
               </div>
               
               <div className="space-y-6">
-                {/* Cuisine Filter */}
                 <div>
                   <h3 className="font-medium mb-2">Cuisine</h3>
                   <div className="flex flex-wrap gap-2">
@@ -104,8 +145,7 @@ const AllRecipes = () => {
                     >
                       All
                     </Button>
-                    
-                    {cuisines.map(cuisine => (
+                    {cuisineOptions.map(cuisine => (
                       <Button
                         key={cuisine}
                         variant={selectedCuisine === cuisine ? "default" : "outline"}
@@ -180,7 +220,7 @@ const AllRecipes = () => {
                   </div>
                 </div>
                 
-                {/* Difficulty */}
+                 {/* Difficulty */}
                 <div>
                   <h3 className="font-medium mb-2">Difficulty</h3>
                   <div className="flex flex-wrap gap-2">
@@ -192,33 +232,17 @@ const AllRecipes = () => {
                     >
                       All
                     </Button>
-                    
-                    <Button
-                      variant={difficulty === 'Easy' ? "default" : "outline"}
-                      size="sm"
-                      className={difficulty === 'Easy' ? "bg-green-600" : ""}
-                      onClick={() => setDifficulty('Easy')}
-                    >
-                      Easy
-                    </Button>
-                    
-                    <Button
-                      variant={difficulty === 'Medium' ? "default" : "outline"}
-                      size="sm"
-                      className={difficulty === 'Medium' ? "bg-amber-600" : ""}
-                      onClick={() => setDifficulty('Medium')}
-                    >
-                      Medium
-                    </Button>
-                    
-                    <Button
-                      variant={difficulty === 'Hard' ? "default" : "outline"}
-                      size="sm"
-                      className={difficulty === 'Hard' ? "bg-red-600" : ""}
-                      onClick={() => setDifficulty('Hard')}
-                    >
-                      Hard
-                    </Button>
+                    {difficultyOptions.map(level => (
+                      <Button
+                        key={level}
+                        variant={difficulty === level ? "default" : "outline"}
+                        size="sm"
+                        className={difficulty === level ? "bg-qzene-purple" : ""}
+                        onClick={() => setDifficulty(level)}
+                      >
+                        {level}
+                      </Button>
+                    ))}
                   </div>
                 </div>
               </div>
