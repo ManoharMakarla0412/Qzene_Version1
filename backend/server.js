@@ -55,10 +55,8 @@ app.use(cors({
 
 // Increase payload limit for image uploads
 app.use(express.json({ limit: '50mb' }));
-app.use(cookieParser({ maxAge : 24 * 60 * 60 * 1000}));
+app.use(cookieParser({ maxAge: 24 * 60 * 60 * 1000 }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
-
 
 // Pre-flight requests
 app.options('*', cors());
@@ -72,7 +70,6 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // API Routes
 app.use("/api/auth", authRoutes);
 
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   if (err.name === 'UnauthorizedError') {
@@ -84,19 +81,16 @@ app.use((err, req, res, next) => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  connectDB()
+// Start server only after DB connects
+connectDB()
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`Server is running at http://localhost:${PORT}`);
-      console.log(`Swagger UI available at http://localhost:${PORT}/api-docs`);
+      console.log(`🚀 Server is running at http://localhost:${PORT}`);
+      // console.log(`Swagger UI available at http://localhost:${PORT}/api-docs`);
     });
   })
   .catch((err) => {
     console.error("Failed to connect to database:", err);
   });
-});
 
 module.exports = app;
