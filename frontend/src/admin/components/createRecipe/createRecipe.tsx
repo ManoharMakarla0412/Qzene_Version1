@@ -429,7 +429,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
   const response = await fetch(
     isEditing && initialData?.id
       ? `${API_URL}/api/v1/admin/recipes/${initialData.id}`
-      : "${API_URL}/api/v1/admin/recipes",
+      :  `${API_URL}/api/v1/admin/recipes`,
     {
       method: isEditing ? "PUT" : "POST",
       credentials: "include",
