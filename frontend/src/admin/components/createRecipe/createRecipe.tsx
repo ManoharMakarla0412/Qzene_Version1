@@ -109,7 +109,7 @@ const CreateRecipe = ({
         }
 
         const categoryRes = await fetch(
-          "${API_URL}/api/v1/admin/enums/Culinary%20Classification",
+          `${API_URL}/api/v1/admin/enums/Culinary%20Classification`,
           { credentials: "include" }
         );
         const categoryData = await categoryRes.json();
