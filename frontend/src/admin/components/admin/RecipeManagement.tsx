@@ -275,7 +275,7 @@ export const RecipeManagement = () => {
                         {recipe.price === 0 ? (
                             <Badge className="bg-green-100 text-green-800">Free</Badge>
                         ) : (
-                            `$${recipe.price.toFixed(2)}`
+                            `₹${recipe.price.toFixed(2)}`
                         )}
                         </span>
                     </div>
@@ -324,7 +324,7 @@ export const RecipeManagement = () => {
       </div>
 
       {/* Pagination (This remains static for now) */}
-      <div className="flex justify-center pt-6">
+      {/* <div className="flex justify-center pt-6">
         <div className="flex space-x-2">
           <Button variant="outline" size="sm">Previous</Button>
           <Button size="sm" className="qzene-btn-primary">1</Button>
@@ -332,7 +332,7 @@ export const RecipeManagement = () => {
           <Button variant="outline" size="sm">3</Button>
           <Button variant="outline" size="sm">Next</Button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
