@@ -21,7 +21,7 @@ const Index = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/v1/admin/enums/categories`, {
+        const response = await fetch(`${API_URL}/api/v1/admin/enums/categories/all`, {
           method: "GET",
           credentials: "include", // Send JWT cookie
           headers: { "Content-Type": "application/json" }, // If token is stored in user
