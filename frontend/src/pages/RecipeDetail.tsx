@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";  // Add useNavigate import
-import { recipes } from "@/data/recipes";
+import { useRecipe } from "@/contexts/RecipeContext"; // Use context instead of static import
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, Users, Star, ChefHat, Info } from "lucide-react";
@@ -10,8 +10,22 @@ import RecipeGrid from "@/components/RecipeGrid";
 const RecipeDetail = () => {
   const navigate = useNavigate();  // Add this hook
   const { id } = useParams<{ id: string }>();
-  const recipe = recipes.find(r => r.id === id);
+  const { recipes, loading } = useRecipe();  // Get recipes from context
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar onSearch={() => {}} />
+        <div className="container py-16 flex-grow flex items-center justify-center">
+          <span className="text-lg text-gray-500">Loading...</span>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
   
+  const recipe = recipes.find(r => r.id === id);
+
   // Get related recipes (same cuisine)
   const relatedRecipes = recipe 
     ? recipes.filter(r => r.cuisine === recipe.cuisine && r.id !== recipe.id).slice(0, 4)

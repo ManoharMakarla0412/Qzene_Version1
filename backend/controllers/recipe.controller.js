@@ -154,10 +154,20 @@ const getAllRecipes = async (req, res) => {
   }
 };
 
+const deleteRecipe = async (req, res) => {
+  try {
+    await Recipe.deleteMany({});
+    res.status(200).json({ message: 'All recipes deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
 module.exports = {
   createRecipe,
   getRecipe,
   updateRecipe,
   getAllRecipes,
-  updateRecipeStatus
+  updateRecipeStatus,
+  deleteRecipe,
 };

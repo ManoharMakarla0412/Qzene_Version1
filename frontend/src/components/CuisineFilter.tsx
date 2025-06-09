@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { CuisineType } from "@/types";
-import { cuisines } from "@/data/recipes";
+import { useRecipe } from "@/contexts/RecipeContext"; // Use context instead of static import
 
 interface CuisineFilterProps {
   selectedCuisine: CuisineType | null;
@@ -9,6 +9,9 @@ interface CuisineFilterProps {
 }
 
 const CuisineFilter = ({ selectedCuisine, onSelectCuisine }: CuisineFilterProps) => {
+  const { recipes } = useRecipe();
+  // Get unique cuisines from recipes
+  const cuisines = Array.from(new Set(recipes.map(r => r.cuisine))).sort();
   return (
     <div className="flex flex-wrap gap-2 py-4">
       <Button

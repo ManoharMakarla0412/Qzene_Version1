@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { recipes } from "@/data/recipes";
+import { useRecipe } from "@/contexts/RecipeContext"; // Use context instead of static import
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,20 @@ import { Clock, Star, Utensils, Users } from "lucide-react";
 
 const RecipeDetails = () => {
   const { id } = useParams();
+  const { recipes, loading } = useRecipe(); // Get recipes from context
   const recipe = recipes.find(r => r.id === id);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="container py-8 flex-grow flex items-center justify-center">
+          <span className="text-lg text-gray-500">Loading...</span>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!recipe) {
     return (

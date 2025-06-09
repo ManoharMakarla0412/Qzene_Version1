@@ -4,7 +4,8 @@ const {
   getRecipe, 
   updateRecipe, 
   getAllRecipes,
-  updateRecipeStatus 
+  updateRecipeStatus, 
+  deleteRecipe
 } = require('../controllers/recipe.controller');
 
 const router = express.Router();
@@ -14,5 +15,6 @@ router.post('/recipes', createRecipe);
 router.get('/recipes/:id', getRecipe);
 router.put('/recipes/:id', updateRecipe);
 router.patch('/recipes/:id/status', updateRecipeStatus);
+router.delete('/recipes', deleteRecipe); // 👈 add this route
 
 module.exports = router;

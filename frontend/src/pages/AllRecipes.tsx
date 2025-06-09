@@ -1,6 +1,6 @@
 
-import { useEffect, useState } from "react";
-import { Recipe, DifficultyLevel, Category  } from "@/types";
+import { useState } from "react";
+import { useRecipe } from "@/contexts/RecipeContext";
 import { CuisineType, DeviceSupport } from "@/types";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -9,41 +9,18 @@ import CuisineFilter from "@/components/CuisineFilter";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { log } from "console";
 
 const AllRecipes = () => {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { recipes, loading } = useRecipe(); // Use context hook
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCuisine, setSelectedCuisine] = useState<CuisineType | null>(null);
   const [selectedDevice, setSelectedDevice] = useState<DeviceSupport | null>(null);
   const [cookingTimeRange, setCookingTimeRange] = useState([0, 120]);
   const [difficulty, setDifficulty] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
 
- useEffect(() => {
-  const fetchRecipes = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("http://localhost:5000/api/recipes");
-      const data = await res.json();
-      if (data.success && Array.isArray(data.data)) {
-        setRecipes(data.data);
-      } else {
-        console.error("No valid recipe array found", data);
-      }
-    } catch (err) {
-      console.error("Error fetching recipes:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchRecipes();
-}, []);
   const cuisineOptions = Array.from(new Set(recipes.map(r => r.cuisine))).sort();
   const difficultyOptions = Array.from(new Set(recipes.map(r => r.difficulty))).sort();
-  const categoryOptions = Array.from(new Set(recipes.map(r => r.category).filter(Boolean))).sort();
 
   
   // Filter recipes based on all filters

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { cuisines, getRecipesByCuisine } from "@/data/recipes";
+import { useRecipe } from "@/contexts/RecipeContext"; // Use context instead of static import
 import { CuisineType } from "@/types";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 const CuisinesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCuisine, setSelectedCuisine] = useState<CuisineType | null>(null);
-  
+  const { recipes, loading } = useRecipe(); // Get recipes from context
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
@@ -43,8 +44,11 @@ const CuisinesPage = () => {
     "Korean": "https://images.unsplash.com/photo-1590301157890-4810ed352733?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60"
   };
   
-  const filteredRecipes = selectedCuisine 
-    ? getRecipesByCuisine(selectedCuisine)
+  // Get unique cuisines from recipes
+  const cuisines = Array.from(new Set(recipes.map(r => r.cuisine))).sort();
+
+   const filteredRecipes = selectedCuisine
+    ? recipes.filter(r => r.cuisine === selectedCuisine)
     : [];
 
   return (

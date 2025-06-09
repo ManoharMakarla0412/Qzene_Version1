@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getFeaturedRecipes, getChefCreatedRecipes, getRecipesByCuisine, recipes } from "@/data/recipes";
+import { useRecipe } from "@/contexts/RecipeContext"; // Use context instead of static import
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import RecipeGrid from "@/components/RecipeGrid";
@@ -11,20 +11,22 @@ import Footer from "@/components/Footer";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { recipes, loading } = useRecipe(); // Get recipes from context
+
+  const featuredRecipes = recipes.filter(r => r.featured);
   
-  const featuredRecipes = getFeaturedRecipes();
-  const chefCuratedRecipes = getChefCreatedRecipes();
+  const chefCuratedRecipes = recipes.filter(r => r.chefCreated);
   
-  // Get a complete row of recipes for each cuisine section
-  // For a 4-column grid, we need at least 4 recipes per cuisine
-  const indianRecipes = getRecipesByCuisine("Indian");
-  const italianRecipes = getRecipesByCuisine("Italian").slice(0, 8);
-  const mexicanRecipes = getRecipesByCuisine("Mexican").slice(0, 8);
-  
+
+   // Get a complete row of recipes for each cuisine section
+  const indianRecipes = recipes.filter(r => r.cuisine === "Indian").slice(0, 8);
+  const italianRecipes = recipes.filter(r => r.cuisine === "Italian").slice(0, 8);
+  const mexicanRecipes = recipes.filter(r => r.cuisine === "Mexican").slice(0, 8);
+
   // For the marquee, get a variety of recipes
   const marqueeRecipes1 = recipes.slice(0, 10);
   const marqueeRecipes2 = recipes.slice(10, 20);
-  
+
   // Filter recipes if search is active
   const filteredRecipes = searchQuery
     ? recipes.filter(recipe => 

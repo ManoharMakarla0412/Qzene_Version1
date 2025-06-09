@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { getRecipesByDevice } from "@/data/recipes";
+import { useRecipe } from "@/contexts/RecipeContext"; // Use context instead of static import
 import { DeviceSupport } from "@/types";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -15,6 +15,8 @@ const DevicesPage = () => {
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabParam || "overview");
+  const { recipes, loading } = useRecipe();
+
   
   // Set the active tab based on URL parameter
   useEffect(() => {
@@ -23,9 +25,9 @@ const DevicesPage = () => {
     }
   }, [tabParam]);
   
-  const momeRecipes = getRecipesByDevice("MoMe");
-  const simmrRecipes = getRecipesByDevice("Simmr");
-  
+  const momeRecipes = recipes.filter(r => r.deviceSupport === "MoMe" || r.deviceSupport === "Both");
+  const simmrRecipes = recipes.filter(r => r.deviceSupport === "Simmr" || r.deviceSupport === "Both");
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };

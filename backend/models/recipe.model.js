@@ -18,6 +18,7 @@ const recipeSchema = new mongoose.Schema({
   // New fields from your data
   rating: Number,
   featured: Boolean,
+  chefCreated: Boolean,
   calories: Number,
   protein: Number,
   fat: Number,
