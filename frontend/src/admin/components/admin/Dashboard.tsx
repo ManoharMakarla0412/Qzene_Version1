@@ -93,7 +93,7 @@ export const Dashboard = () => {
         />
         <StatCard
           title="Total Revenue"
-          value="$142,500"
+          value="₹142,500"
           icon={Receipt}
           trend="up"
           trendValue="+24%"
