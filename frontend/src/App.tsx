@@ -34,7 +34,9 @@ function App() {
           <ReactQueryProvider>
             <Router>
               <AuthProvider>
-                <RecipeProvider> {/* Wrap with RecipeProvider */}
+                <RecipeProvider>
+                  {" "}
+                  {/* Wrap with RecipeProvider */}
                   <div className="flex-1">
                     <Routes>
                       {/* ✅ User Routes */}
@@ -77,7 +79,13 @@ function App() {
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </div>
-                  <Toaster position="top-right" richColors />
+                  <Toaster
+                    position="top-right"
+                    richColors
+                    toastOptions={{
+                      className: "w-[400px] h-[100px] text-sm",
+                    }}
+                  />
                 </RecipeProvider>
               </AuthProvider>
             </Router>

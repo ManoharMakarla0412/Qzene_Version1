@@ -702,7 +702,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 m-w-screen">
+    <div className="min-h-screen flex flex-col bg-gray-50 min-w-screen">
       <div className="flex-1 py-6 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
         <Link
           to="/admin"
