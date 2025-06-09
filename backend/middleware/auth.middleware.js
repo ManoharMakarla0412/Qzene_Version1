@@ -2,24 +2,18 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
 
-const protectRoute = async (req, res, next) => {
+const auth = async (req, res, next) => {
   try {
     const token = req.cookies.jwt;
-
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized - No Token Provided" });
-    }
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded || !decoded.userId) {
+    if (!decoded || !decoded._id) {
       return res.status(401).json({ message: "Unauthorized - Invalid Token" });
     }
 
-    const user = await User.findById(decoded.userId).select("-passwordHash");
+    const user = await User.findById(decoded._id).select("-passwordHash");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
     req.user = user;
     next();
   } catch (error) {
@@ -36,6 +30,6 @@ const isAdmin = (req, res, next) => {
 };
 
 module.exports = {
-  protectRoute,
+  auth,
   isAdmin,
 };

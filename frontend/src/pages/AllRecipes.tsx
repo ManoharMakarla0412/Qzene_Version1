@@ -18,7 +18,6 @@ const AllRecipes = () => {
   const [cookingTimeRange, setCookingTimeRange] = useState([0, 120]);
   const [difficulty, setDifficulty] = useState<string | null>(null);
 
-
   const cuisineOptions = Array.from(new Set(recipes.map(r => r.cuisine))).sort();
   const difficultyOptions = Array.from(new Set(recipes.map(r => r.difficulty))).sort();
 

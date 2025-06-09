@@ -1,82 +1,87 @@
+import React, { createContext, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
-import { createContext, useContext, ReactNode } from "react";
-import { Session, User } from "@supabase/supabase-js";
-import { useAuthState } from "@/hooks/useAuthState";
-import { useAuthMethods } from "@/hooks/useAuthMethods";
-
-type UserRole = "user" | "chef" | "admin";
-
-type Profile = {
+interface User {
   id: string;
-  first_name: string | null;
-  last_name: string | null;
-  avatar_url: string | null;
-  role: UserRole;
-  bio: string | null;
-};
+  username: string;
+  email: string;
+  roles: string[];
+  profile?: { name?: string; avatarUrl?: string; bio?: string };
+}
 
 interface AuthContextType {
-  session: Session | null;
   user: User | null;
-  profile: Profile | null;
-  isAdmin: boolean;
-  isChef: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ error: any, data: any }>;
-  signOut: () => Promise<void>;
-  loading: boolean;
-  updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
-  becomeChef: (chefData: any) => Promise<{ error: any }>;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  checkAuth: () => Promise<void>;
 }
 
-// Create the context with a default undefined value
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const { session, user, profile, loading, setProfile } = useAuthState();
-  const { signIn, signUp, signOut: supabaseSignOut, updateProfile: updateProfileMethod, becomeChef: becomeChefMethod } = useAuthMethods();
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  console.log("User: ", user)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const location = useLocation(); // Get current route
 
-  const isAdmin = profile?.role === "admin";
-  const isChef = profile?.role === "chef" || profile?.role === "admin";
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/api/auth/check', {
+        method: 'GET',
+        credentials: 'include',
+      });
 
-  const updateProfile = async (updates: Partial<Profile>) => {
-    const result = await updateProfileMethod(updates, profile);
-    if (!result.error && profile) {
-      setProfile({ ...profile, ...updates });
+      if (!response.ok) throw new Error('Auth check failed');
+      const data = await response.json();
+
+      setUser(data);
+      setIsAuthenticated(true);
+    } catch (error) {
+      setUser(null);
+      setIsAuthenticated(false);
     }
-    return result;
   };
 
-  const signOut = async () => {
-    await supabaseSignOut();
+  const login = async (email: string, password: string) => {
+    const response = await fetch('http://localhost:5001/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) throw new Error('Login failed');
+
+    const data = await response.json();
+    setUser(data.user);
+    setIsAuthenticated(true);
   };
 
-  const becomeChef = async (chefData: any) => {
-    if (!user) return { error: new Error("User not logged in") };
-    return becomeChefMethod(chefData, user.id, user.email, profile);
+  const logout = async () => {
+    await fetch('http://localhost:5001/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    setUser(null);
+    setIsAuthenticated(false);
   };
 
-  const value = {
-    session,
-    user,
-    profile,
-    isAdmin,
-    isChef,
-    signIn,
-    signUp,
-    signOut,
-    loading,
-    updateProfile,
-    becomeChef,
-  };
+  useEffect(() => {
+    // Only run checkAuth for /admin/* routes
+    if (location.pathname.startsWith('/admin')) {
+      checkAuth();
+    }
+  }, [location.pathname]); // Re-run when path changes
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  return (
+    <AuthContext.Provider value={{ user, isAuthenticated, login, logout, checkAuth }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+export const useAuth = () => React.useContext(AuthContext);
