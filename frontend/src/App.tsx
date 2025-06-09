@@ -83,7 +83,9 @@ function App() {
                     position="top-right"
                     richColors
                     toastOptions={{
-                      className: "w-[400px] h-[100px] text-sm",
+                      className:
+                        // Adjust the width as needed, use padding for flexible height
+                        "w-[400px] p-4 text-sm flex items-center shadow-lg rounded-lg",
                     }}
                   />
                 </RecipeProvider>

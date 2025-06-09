@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRecipeMaker } from "../../hooks/useRecipeMaker";
 import { API_URL } from "@/lib/constants";
+import React from "react";
 
 interface CreateRecipeProps {
   isEditing?: boolean;
@@ -49,7 +50,6 @@ const CreateRecipe = ({
   const [cuisines, setCuisines] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [recipeTypes, setRecipeTypes] = useState<string[]>([]);
-
   const [recipeData, setRecipeData] = useState({
     name: initialData?.name || "",
     description: initialData?.description || "",
@@ -60,6 +60,12 @@ const CreateRecipe = ({
     cuisine_type: initialData?.cuisine_type || "",
     recipe_type: initialData?.recipe_type || "",
   });
+  // Best practice: Define your steps in an array for scalability
+  const steps = [
+    { id: 1, name: "Recipe Details" },
+    { id: 2, name: "Ingredients" },
+    { id: 3, name: "Instructions" },
+  ];
 
   const {
     recipeName,
@@ -307,167 +313,167 @@ const CreateRecipe = ({
     });
     return collectedInstructions;
   };
-const handleSubmit = async (e?: React.FormEvent) => {
-  if (e) e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
-  if (!user || !user.id) {
-    toast({
-      title: "You must be logged in to create recipes",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  setLoading(true);
-  try {
-    if (!recipeData.name.trim()) {
-      toast({ title: "Recipe name is required", variant: "destructive" });
-      throw new Error("Recipe name is missing");
-    }
-    if (containers.every((c) => c.ingredients.length === 0)) {
+    if (!user || !user.id) {
       toast({
-        title: "At least one ingredient is required",
+        title: "You must be logged in to create recipes",
         variant: "destructive",
       });
-      throw new Error("No ingredients added");
-    }
-    if (
-      recipeSteps.length === 0 ||
-      recipeSteps.some((step) => !step.description.trim())
-    ) {
-      toast({
-        title: "All steps must have a description",
-        variant: "destructive",
-      });
-      throw new Error("Invalid or missing steps");
-    }
-    if (
-      !recipeData.cuisine_type ||
-      !recipeData.category ||
-      !recipeData.recipe_type
-    ) {
-      toast({
-        title: "Cuisine, category, and recipe type are required",
-        variant: "destructive",
-      });
-      throw new Error("Missing required fields");
+      return;
     }
 
-    const instructionsArray = collectAllInstructions();
-    const ingredientsList = containers
-      .flatMap((c) => c.ingredients)
-      .map(
-        (i) =>
-          `${i.quantity || 1} ${i.units || ""} ${
-            i.prepType ? ` ${i.prepType} ` : ""
-          }${i.name}`
-      )
-      .join("\n");
-    const instructionsList = recipeSteps
-      .map((step, index) => `${index + 1}. ${step.description}`)
-      .join("\n");
-    const cookingTime = parseInt(recipeData.cookingTime) || 0;
+    setLoading(true);
+    try {
+      if (!recipeData.name.trim()) {
+        toast({ title: "Recipe name is required", variant: "destructive" });
+        throw new Error("Recipe name is missing");
+      }
+      if (containers.every((c) => c.ingredients.length === 0)) {
+        toast({
+          title: "At least one ingredient is required",
+          variant: "destructive",
+        });
+        throw new Error("No ingredients added");
+      }
+      if (
+        recipeSteps.length === 0 ||
+        recipeSteps.some((step) => !step.description.trim())
+      ) {
+        toast({
+          title: "All steps must have a description",
+          variant: "destructive",
+        });
+        throw new Error("Invalid or missing steps");
+      }
+      if (
+        !recipeData.cuisine_type ||
+        !recipeData.category ||
+        !recipeData.recipe_type
+      ) {
+        toast({
+          title: "Cuisine, category, and recipe type are required",
+          variant: "destructive",
+        });
+        throw new Error("Missing required fields");
+      }
 
-    const simplifiedContainers = containers.map((container) => ({
-      id: container.id,
-      name: container.name,
-      ingredients: container.ingredients.map((ing) => ({
-        id: ing.id,
-        name: ing.name,
-        type: ing.type,
-        quantity: ing.quantity,
-        units: ing.units,
-        prepType: ing.prepType,
-        image_url: ing.image_url,
-      })),
-    }));
+      const instructionsArray = collectAllInstructions();
+      const ingredientsList = containers
+        .flatMap((c) => c.ingredients)
+        .map(
+          (i) =>
+            `${i.quantity || 1} ${i.units || ""} ${
+              i.prepType ? ` ${i.prepType} ` : ""
+            }${i.name}`
+        )
+        .join("\n");
+      const instructionsList = recipeSteps
+        .map((step, index) => `${index + 1}. ${step.description}`)
+        .join("\n");
+      const cookingTime = parseInt(recipeData.cookingTime) || 0;
 
-    const simplifiedSteps = recipeSteps.map((step) => ({
-      id: step.id,
-      description: step.description,
-      time: step.time || 0,
-      temperature: step.temperature || 0,
-    }));
+      const simplifiedContainers = containers.map((container) => ({
+        id: container.id,
+        name: container.name,
+        ingredients: container.ingredients.map((ing) => ({
+          id: ing.id,
+          name: ing.name,
+          type: ing.type,
+          quantity: ing.quantity,
+          units: ing.units,
+          prepType: ing.prepType,
+          image_url: ing.image_url,
+        })),
+      }));
 
-    const recipeJson = {
-      name: recipeData.name,
-      description: recipeData.description,
-      category: recipeData.category,
-      difficulty: recipeData.difficulty,
-      cookingTime,
-      cuisine_type: recipeData.cuisine_type || "Custom",
-      recipe_type: recipeData.recipe_type,
-      price: parseFloat(recipeData.price) || 0,
-      servingSize,
-      containers: simplifiedContainers,
-      steps: simplifiedSteps,
-      instructions_array: instructionsArray,
-    };
+      const simplifiedSteps = recipeSteps.map((step) => ({
+        id: step.id,
+        description: step.description,
+        time: step.time || 0,
+        temperature: step.temperature || 0,
+      }));
 
-    const recipePayload = {
-      name: recipeData.name,
-      description: recipeData.description,
-      ingredients: ingredientsList,
-      instructions: instructionsList,
-      cookingTime,
-      difficulty: recipeData.difficulty,
-      cuisine_type: recipeData.cuisine_type || "Custom",
-      category: recipeData.category,
-      recipe_type: recipeData.recipe_type,
-      price: parseFloat(recipeData.price) || 0,
-      user_id: user.id,
-      recipe_json: recipeJson,
-    };
+      const recipeJson = {
+        name: recipeData.name,
+        description: recipeData.description,
+        category: recipeData.category,
+        difficulty: recipeData.difficulty,
+        cookingTime,
+        cuisine_type: recipeData.cuisine_type || "Custom",
+        recipe_type: recipeData.recipe_type,
+        price: parseFloat(recipeData.price) || 0,
+        servingSize,
+        containers: simplifiedContainers,
+        steps: simplifiedSteps,
+        instructions_array: instructionsArray,
+      };
 
-   const formData = new FormData();
-  formData.append("recipe", JSON.stringify(recipePayload)); // Ensure this is stringified
-  if (imageFile) {
-    formData.append("image", imageFile);
-  }
+      const recipePayload = {
+        name: recipeData.name,
+        description: recipeData.description,
+        ingredients: ingredientsList,
+        instructions: instructionsList,
+        cookingTime,
+        difficulty: recipeData.difficulty,
+        cuisine_type: recipeData.cuisine_type || "Custom",
+        category: recipeData.category,
+        recipe_type: recipeData.recipe_type,
+        price: parseFloat(recipeData.price) || 0,
+        user_id: user.id,
+        recipe_json: recipeJson,
+      };
 
-  // Remove the Content-Type header - let the browser set it automatically
-  const response = await fetch(
-    isEditing && initialData?.id
-      ? `${API_URL}/api/v1/admin/recipes/${initialData.id}`
-      :  `${API_URL}/api/v1/admin/recipes`,
-    {
-      method: isEditing ? "PUT" : "POST",
-      credentials: "include",
-      body: formData, // Let browser set Content-Type with boundary
-    }
-  );
+      const formData = new FormData();
+      formData.append("recipe", JSON.stringify(recipePayload)); // Ensure this is stringified
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
 
-
-    const data = await response.json();
-
-    if (!data.success) {
-      throw new Error(
-        data.message || `Failed to ${isEditing ? "update" : "create"} recipe`
+      // Remove the Content-Type header - let the browser set it automatically
+      const response = await fetch(
+        isEditing && initialData?.id
+          ? `${API_URL}/api/v1/admin/recipes/${initialData.id}`
+          : `${API_URL}/api/v1/admin/recipes`,
+        {
+          method: isEditing ? "PUT" : "POST",
+          credentials: "include",
+          body: formData, // Let browser set Content-Type with boundary
+        }
       );
-    }
 
-    toast({
-      title: `Recipe ${isEditing ? "updated" : "created"} successfully`,
-      description: `Your recipe has been ${isEditing ? "updated" : "saved"}`,
-    });
-    resetRecipe();
-    navigate("/admin");
-  } catch (error: any) {
-    console.error(
-      `Error ${isEditing ? "updating" : "saving"} recipe:`,
-      error
-    );
-    toast({
-      title: `Error ${isEditing ? "updating" : "saving"} recipe`,
-      description: error.message || "Something went wrong",
-      variant: "destructive",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(
+          data.message || `Failed to ${isEditing ? "update" : "create"} recipe`
+        );
+      }
+
+      toast({
+        title: `Recipe ${isEditing ? "updated" : "created"} successfully`,
+        description: `Your recipe has been ${isEditing ? "updated" : "saved"}`,
+      });
+      resetRecipe();
+      navigate("/admin");
+    } catch (error: any) {
+      console.error(
+        `Error ${isEditing ? "updating" : "saving"} recipe:`,
+        error
+      );
+      toast({
+        title: `Error ${isEditing ? "updating" : "saving"} recipe`,
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderStepContent = () => {
+    // This function's content remains unchanged
     switch (currentStep) {
       case 1:
         return (
@@ -702,85 +708,114 @@ const handleSubmit = async (e?: React.FormEvent) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 min-w-screen">
-      <div className="flex-1 py-6 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+    // 1. Full-page container with responsive padding and soft background
+    <div className="min-h-screen bg-gray-50 w-full py-8 px-6 sm:px-8 lg:px-12">
+      {/* 2. Wider, centered main content block */}
+      <div className="w-full max-w-7xl mx-auto">
         <Link
           to="/admin"
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-qzene-gradient transition-bg-color duration-500 rounded-lg shadow-md mb-6"
+          aria-label="Back to admin dashboard"
         >
           <ArrowLeft size={16} />
           Back to Dashboard
         </Link>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-8">
-            {isEditing ? "Edit Recipe" : "Create New Recipe"}
-          </h1>
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex space-x-2">
-              <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                  currentStep === 1 ? "bg-[#986CF5] text-white" : "bg-gray-200"
-                }`}
-              >
-                {currentStep > 1 ? <Check className="w-5 h-5" /> : 1}
+
+        <Card className="w-full shadow-lg rounded-xl overflow-hidden">
+          <CardHeader className="p-6 md:p-8 border-b">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center">
+              <div>
+                <CardTitle className="text-2xl font-bold">
+                  {isEditing ? "Edit Recipe" : "Create New Recipe"}
+                </CardTitle>
+                <CardDescription className="mt-2">
+                  Follow the steps below to build your recipe.
+                </CardDescription>
               </div>
-              <div className="h-1 w-12 bg-gray-200 mt-4"></div>
-              <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                  currentStep === 2
-                    ? "bg-[#986CF5] text-white"
-                    : currentStep > 2
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-200"
-                }`}
-              >
-                {currentStep > 2 ? <Check className="w-5 h-5" /> : 2}
-              </div>
-              <div className="h-1 w-12 bg-gray-200 mt-4"></div>
-              <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                  currentStep === 3 ? "bg-[#986CF5] text-white" : "bg-gray-200"
-                }`}
-              >
-                3
+              <div className="text-gray-500 text-sm whitespace-nowrap pt-4 sm:pt-0">
+                Step {currentStep} of 3
               </div>
             </div>
-            <div className="text-gray-500 text-sm">
-              Step {currentStep}:{" "}
-              {currentStep === 1
-                ? "Basic Information"
-                : currentStep === 2
-                ? "Add Ingredients"
-                : "Create Instructions"}
+
+            <div className="w-full px-4 sm:px-8">
+              <div className="flex items-center">
+                {steps.map((step, index) => {
+                  const isCompleted = currentStep > step.id;
+                  const isCurrent = currentStep === step.id;
+                  const isUpcoming = currentStep < step.id;
+
+                  return (
+                    // Use React.Fragment for the key since we have multiple top-level elements (button and connector)
+                    <React.Fragment key={step.id}>
+                      {/* Main clickable button for each step */}
+                      <button
+                        onClick={() => !isUpcoming && setCurrentStep(step.id)} // Allow clicking current or completed steps
+                        disabled={isUpcoming}
+                        className="flex flex-col items-center gap-2 transition-transform duration-200 ease-in-out"
+                        aria-label={`Go to step ${step.id}: ${step.name}`}
+                      >
+                        <div
+                          className={`flex h-10 w-10 items-center justify-center rounded-full border-2 font-bold transition-all duration-300
+                  ${
+                    isCompleted
+                      ? "border-green-500 bg-green-500 text-white"
+                      : ""
+                  }
+                  ${
+                    isCurrent
+                      ? "border-[#F25A38] bg-[#CD1265] text-white scale-110 shadow-lg"
+                      : ""
+                  }
+                  ${
+                    isUpcoming
+                      ? "border-gray-300 bg-gray-100 text-gray-400"
+                      : ""
+                  }
+                `}
+                        >
+                          {isCompleted ? <Check size={24} /> : step.id}
+                        </div>
+                        <p
+                          className={`text-xs font-semibold text-center
+                  ${isCurrent ? "text-[#CD1265]" : "text-gray-500"}
+                  ${isUpcoming ? "text-gray-400" : ""}
+                `}
+                        >
+                          {step.name}
+                        </p>
+                      </button>
+
+                      {/* Connector Line - rendered between steps */}
+                      {index < steps.length - 1 && (
+                        <div
+                          className={`h-1 flex-1 transition-colors duration-300 rounded mx-2
+                  ${isCompleted ? "bg-green-500" : "bg-gray-200"}
+                `}
+                        ></div>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        </div>
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle>
-              {recipeData.name || (isEditing ? "Edit Recipe" : "New Recipe")}
-            </CardTitle>
-            <CardDescription>
-              {currentStep === 1 &&
-                `Fill in the details of your ${
-                  isEditing ? "recipe" : "new recipe"
-                } below`}
-              {currentStep === 2 && "Drag ingredients to create your recipe"}
-              {currentStep === 3 &&
-                "Add detailed instructions for preparing your recipe"}
-            </CardDescription>
           </CardHeader>
-          <CardContent>{renderStepContent()}</CardContent>
-          <CardFooter className="flex justify-between">
+
+          <CardContent className="p-6 md:p-8 space-y-8">
+            {renderStepContent()}
+          </CardContent>
+
+          {/* Sticky footer for persistent actions */}
+          <CardFooter className="flex justify-between p-6 bg-gray-50/95 backdrop-blur-sm border-t sticky bottom-0 z-10">
             <div>
               {currentStep > 1 && (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={goToPreviousStep}
-                  className="flex items-center"
+                  className="flex items-center gap-2"
+                  aria-label="Go to previous step"
                 >
-                  <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                  <ChevronLeft className="h-4 w-4" /> Back
                 </Button>
               )}
             </div>
@@ -789,25 +824,32 @@ const handleSubmit = async (e?: React.FormEvent) => {
                 <>
                   <Button
                     type="button"
-                    variant="outline"
-                    onClick={() => navigate("/recipes")}
+                    variant="ghost"
+                    onClick={() => navigate("/admin")}
+                    aria-label="Cancel recipe creation"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="button"
-                    className="bg-[#986CF5] hover:bg-[#986CF5]/90 flex items-center"
+                    className="bg-[#986CF5] hover:bg-[#986CF5]/90 flex items-center gap-2"
                     onClick={goToNextStep}
+                    aria-label="Go to next step"
                   >
-                    Next <ChevronRight className="ml-2 h-4 w-4" />
+                    Next <ChevronRight className="h-4 w-4" />
                   </Button>
                 </>
               ) : (
                 <Button
                   type="button"
-                  className="bg-[#986CF5] hover:bg-[#986CF5]/90"
-                  onClick={() => handleSubmit()}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  onClick={handleSubmit}
                   disabled={loading}
+                  aria-label={
+                    isEditing
+                      ? "Update recipe and save changes"
+                      : "Save new recipe"
+                  }
                 >
                   {loading
                     ? isEditing

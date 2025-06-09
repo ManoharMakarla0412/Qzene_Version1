@@ -261,7 +261,7 @@ export const RecipeManagement = () => {
                     <CardTitle className="text-lg group-hover:text-[#F25A38] transition-colors">
                       {recipe.name}
                     </CardTitle>
-                    <p className="text-sm text-gray-500 mt-1">by {recipe.chef}</p>
+                    {/* <p className="text-sm text-gray-500 mt-1">by {recipe.chef}</p> */}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 flex-grow">

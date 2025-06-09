@@ -2,9 +2,9 @@ import React, { useEffect, useMemo } from "react";
 import { RecipeStep } from "@/types/recipeMaker";
 import { Instruction } from "@/types/instruction";
 import { Ingredient } from "@/types/recipeMaker";
-import { ArrowRight, X } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { ArrowRight, ChefHat, CookingPot, Plus, X } from "lucide-react";
 
+// The props and internal logic remain the same. The changes are primarily in the JSX structure.
 interface InstructionsAreaProps {
   recipeName: string;
   recipeSteps: RecipeStep[];
@@ -35,7 +35,8 @@ const InstructionsArea = ({
       id: 0,
       description: "",
       time: 0,
-      temperature: 0
+      temperature: 0,
+      additionalData: {}
     },
   [recipeSteps, currentStep]);
 
@@ -96,87 +97,78 @@ const InstructionsArea = ({
     }
   }, [instructions, currentStepData, onInstructionsProcessed]);
 
+
   return (
     <div className="md:col-span-6 p-4">
+      {/* Main drop zone container with flowchart styling */}
       <div 
-        className="min-h-[500px] border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col relative"
+        className="min-h-[500px] border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col relative"
         onDragOver={onDragOver}
         onDrop={onDrop}
       >
-        <h2 className="text-2xl font-bold text-center mb-4">Instructions</h2>
-        
+        <h2 className="text-xl font-semibold text-gray-700 mb-6">
+          Step {currentStep}: Instructions
+        </h2>
+
+        {/* Use ordered list for semantic, sequential steps */}
         {instructions.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          <ol className="relative space-y-8 border-l-2 border-dashed border-gray-200">
             {instructions.map((instruction, index) => {
-              let displayName = instruction;
-              let displayValue = "";
-              let displayUnits = "";
-              
-              const nameMatch = instruction.match(/^(Add\s+)?([^(]+)(?:\s*\(.*\))?/);
-              const valueUnitsMatch = instruction.match(/\((\d+\.?\d*)?(?:\s*)([a-zA-Z]+)?\)/);
-              
-              if (nameMatch) {
-                displayName = nameMatch[2].trim();
-              }
-              
-              if (valueUnitsMatch) {
-                displayValue = valueUnitsMatch[1] || "";
-                displayUnits = valueUnitsMatch[2] || "";
-              }
+              // ... (parsing logic remains the same)
+              let displayName = instruction.match(/^(Add\s+)?([^(]+)/)?.[2].trim() || instruction;
+              let valueUnits = instruction.match(/\(([^)]+)\)/)?.[1];
               
               return (
-                <Card key={index} className="p-2 shadow-sm hover:shadow-md transition-shadow relative bg-white">
-                  <button 
-                    onClick={() => onRemoveInstruction(instruction)}
-                    className="absolute top-0.5 right-0.5 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-gray-100 p-0.5"
-                    aria-label="Remove instruction"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                <li key={index} className="relative flex items-start">
+                  {/* Circular node on the flowchart line */}
+                  <span className="absolute -left-[1.3rem] top-1.5 flex items-center justify-center w-10 h-10 bg-indigo-100 rounded-full ring-4 ring-white">
+                    <CookingPot className="w-5 h-5 text-indigo-600" />
+                  </span>
                   
-                  <div className="flex items-start gap-1.5">
-                    <div className="w-4 h-4 rounded-full bg-[#986CF5] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">{displayName}</p>
-                      <div className="flex items-center gap-1 flex-wrap">
-                        {displayValue && (
-                          <span className="text-[10px] text-gray-600">{displayValue}</span>
-                        )}
-                        {displayUnits && (
-                          <span className="text-[10px] bg-blue-100 text-blue-800 px-1 rounded">{displayUnits}</span>
+                  {/* Instruction Card - The main node content */}
+                  <div className="ml-8 w-full bg-white p-4 rounded-xl shadow-md border hover:shadow-lg transition-shadow">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-800">{displayName}</p>
+                        {valueUnits && (
+                          <span className="mt-1 inline-block text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                            {valueUnits}
+                          </span>
                         )}
                       </div>
+                      
+                      {/* Remove Button */}
+                      <button 
+                        onClick={() => onRemoveInstruction(instruction)}
+                        className="text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50 p-1"
+                        aria-label={`Remove instruction: ${displayName}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
-                </Card>
+                </li>
               );
             })}
-          </div>
+          </ol>
         ) : (
-          <div className="flex flex-col items-center justify-center h-[400px] text-gray-400">
-            <p className="text-center italic">
-              Drag instructions or ingredients here to build your recipe step
+          // Polished empty state
+          <div className="flex flex-col items-center justify-center h-[400px] text-center text-gray-500">
+            <ChefHat className="w-16 h-16 text-gray-300 mb-4" />
+            <h3 className="font-semibold">Build Your Recipe</h3>
+            <p className="mt-1 text-sm">
+              Drag instructions or ingredients from the left panel to get started.
             </p>
           </div>
         )}
         
+        {/* Dragging overlay - remains the same, but enhances the new UI */}
         {(draggingInstruction || draggingIngredient) && (
-          <div className="absolute inset-0 bg-[#986CF5]/10 rounded-lg flex items-center justify-center border-2 border-[#986CF5] border-dashed">
-            <div className="bg-white p-3 rounded-lg shadow-lg flex items-center gap-2">
-              <ArrowRight className="h-4 w-4 text-[#986CF5]" />
-              <span className="text-sm font-medium">
-                {draggingInstruction ? (
-                  <>
-                    Add <span className="font-semibold">{draggingInstruction.name}</span>
-                    {draggingInstruction.units && ` (${draggingInstruction.units})`}
-                  </>
-                ) : (
-                  <>
-                    Add <span className="font-semibold">{draggingIngredient?.name}</span>
-                  </>
-                )}
+          <div className="absolute inset-0 bg-indigo-500/10 rounded-lg flex items-center justify-center border-2 border-indigo-500 border-dashed transition-all">
+            <div className="bg-white p-4 rounded-lg shadow-xl flex items-center gap-3 animate-pulse">
+              <Plus className="h-5 w-5 text-indigo-500" />
+              <span className="text-sm font-semibold text-gray-700">
+                Drop to add: {draggingInstruction?.name || draggingIngredient?.name}
               </span>
             </div>
           </div>
