@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit, Trash2, Package } from "lucide-react";
 import { toast } from 'sonner';
+import { API_URL } from "@/lib/constants";
 
 export const IngredientManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,7 +22,7 @@ export const IngredientManagement = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(`http://localhost:5001/api/v1/admin/enums/${category}`, {
+        const response = await fetch(`${API_URL}/api/v1/admin/enums/${category}`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -43,8 +44,11 @@ export const IngredientManagement = () => {
   // Fetch ingredients on mount and after adding a new ingredient
   const fetchIngredients = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/v1/admin/ingredients', {
+      const response = await fetch(`${API_URL}/api/v1/admin/ingredients`, {
         method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: 'include',
       });
       if (!response.ok) {
@@ -104,7 +108,7 @@ export const IngredientManagement = () => {
         formData.append('image', newIngredient.image);
       }
 
-      const response = await fetch('http://localhost:5001/api/v1/admin/ingredients', {
+      const response = await fetch('${API_URL}/api/v1/admin/ingredients', {
         method: 'POST',
         credentials: 'include',
         body: formData,

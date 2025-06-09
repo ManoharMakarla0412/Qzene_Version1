@@ -101,7 +101,7 @@ const Index = () => {
               <DeviceSection />
               
               {/* Discover Flavors Section */}
-              <section className="w-full bg-gray-50 py-12">
+              <section className="w-full h-full bg-gray-50 py-12">
                 <div className="px-4 lg:px-8">
                   <h2 className="text-2xl md:text-3xl font-bold mb-8">Discover New Flavors</h2>
                   <MarqueeRecipes recipes={marqueeRecipes2} direction="right" />

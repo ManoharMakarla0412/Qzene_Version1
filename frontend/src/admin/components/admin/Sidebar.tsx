@@ -1,4 +1,5 @@
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -60,7 +61,8 @@ const menuItems = [
 
 export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-
+  const { user } = useAuth();
+  console.log("User: ", user);
   return (
     <div
       className={cn(
@@ -96,8 +98,7 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
           )}
         </div>
       </div>
-                <Separator className="text-gray-400" />
-
+      <Separator className="text-gray-400" />
 
       {/* Navigation */}
       <nav className="mt-6 px-4 pb-20">
@@ -162,13 +163,15 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
           <div className="flex items-center space-x-3 p-3 rounded-xl bg-gray-50">
             <div className="w-8 h-8 bg-gradient-to-r from-[#F25A38] to-[#CD1265] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-medium">A</span>
+              <span className="text-white text-sm font-medium">
+                {user.username.charAt(0).toUpperCase()}
+              </span>
             </div>
             <div className="flex-1">
               <div className="text-sm font-medium text-gray-900">
-                Admin User
+                {user.username}
               </div>
-              <div className="text-xs text-gray-500">admin@qzene.com</div>
+              <div className="text-xs text-gray-500">{user.email}</div>
             </div>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { API_URL } from '@/lib/constants';
 import React, { createContext, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -21,13 +22,12 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  console.log("User: ", user)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const location = useLocation(); // Get current route
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/check', {
+      const response = await fetch(`${API_URL}/api/auth/check`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (email: string, password: string) => {
-    const response = await fetch('http://localhost:5001/api/auth/login', {
+    const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    await fetch('http://localhost:5001/api/auth/logout', {
+    await fetch(`${API_URL}/api/auth/logout`, {
       method: 'POST',
       credentials: 'include',
     });

@@ -5,6 +5,7 @@ import "./App.css";
 
 // Context Providers
 import { AuthProvider } from "./contexts/AuthContext";
+import { RecipeProvider } from "./contexts/RecipeContext"; // Add this import
 import { ReactQueryProvider } from "./providers/query-client-provider";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -33,50 +34,51 @@ function App() {
           <ReactQueryProvider>
             <Router>
               <AuthProvider>
-                <div className="flex-1">
-                  <Routes>
+                <RecipeProvider> {/* Wrap with RecipeProvider */}
+                  <div className="flex-1">
+                    <Routes>
+                      {/* ✅ User Routes */}
+                      <Route path="/" element={<UserIndex />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/all-recipes" element={<AllRecipes />} />
+                      <Route path="/cuisines" element={<CuisinesPage />} />
+                      <Route path="/devices" element={<DevicesPage />} />
+                      <Route path="/recipes/:id" element={<RecipeDetail />} />
 
-                    {/* ✅ User Routes */}
-                    <Route path="/" element={<UserIndex />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/all-recipes" element={<AllRecipes />} />
-                    <Route path="/cuisines" element={<CuisinesPage />} />
-                    <Route path="/devices" element={<DevicesPage />} />
-                    <Route path="/recipes/:id" element={<RecipeDetail />} />
+                      {/* ✅ Admin Routes (Protected) */}
+                      <Route
+                        path="/admin"
+                        element={
+                          <ProtectedRoute adminOnly={true}>
+                            <AdminDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/create-recipe"
+                        element={
+                          <ProtectedRoute adminOnly={true}>
+                            <CreateRecipe />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* ✅ Admin Routes (Protected) */}
-                    <Route
-                      path="/admin"
-                      element={
-                        <ProtectedRoute adminOnly={true}>
-                          <AdminDashboard />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin/create-recipe"
-                      element={
-                        <ProtectedRoute adminOnly={true}>
-                          <CreateRecipe />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* ✅ Dashboard - Protected (for Authenticated Users) */}
+                      <Route
+                        path="/dashboard"
+                        element={
+                          <ProtectedRoute>
+                            <Dashboard />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* ✅ Dashboard - Protected (for Authenticated Users) */}
-                    <Route
-                      path="/dashboard"
-                      element={
-                        <ProtectedRoute>
-                          <Dashboard />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    {/* ❌ Catch-all */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </div>
-                <Toaster position="top-right" richColors />
+                      {/* ❌ Catch-all */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </div>
+                  <Toaster position="top-right" richColors />
+                </RecipeProvider>
               </AuthProvider>
             </Router>
           </ReactQueryProvider>

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit, Trash2, Star, Filter } from "lucide-react";
 import { toast } from "sonner"; // Using sonner for toast notifications
+import { API_URL } from "@/lib/constants";
 
 // --- Step 1: Define TypeScript types for clarity and safety ---
 
@@ -51,7 +52,7 @@ export const RecipeManagement = () => {
         setLoading(true);
         setError(null);
         
-        const response = await fetch("http://localhost:5001/api/v1/admin/recipes", {
+        const response = await fetch(`${API_URL}/api/v1/admin/recipes`, {
             credentials: 'include', // Important for sending cookies/auth headers
         });
 
@@ -124,7 +125,7 @@ export const RecipeManagement = () => {
         return;
     }
     try {
-        const response = await fetch(`http://localhost:5001/api/v1/admin/recipes/${recipeId}`, {
+        const response = await fetch(`${API_URL}/api/v1/admin/recipes/${recipeId}`, {
             method: 'DELETE',
             credentials: 'include'
         });

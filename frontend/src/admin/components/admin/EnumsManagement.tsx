@@ -19,7 +19,6 @@ export const EnumsManagement = () => {
 
   const handleAddValue = () => {
     if (newValue.trim()) {
-      console.log(`Adding "${newValue}" to ${selectedCategory}`);
       setNewValue("");
     }
   };

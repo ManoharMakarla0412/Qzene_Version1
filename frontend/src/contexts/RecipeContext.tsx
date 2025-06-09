@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Recipe } from "@/types";
+import { API_URL } from "@/lib/constants";
 
 type RecipeContextType = {
   recipes: Recipe[];
@@ -16,7 +17,7 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
   const fetchRecipes = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/recipes");
+      const res = await fetch(`${API_URL}/api/recipes`);
       const data = await res.json();
       setRecipes(Array.isArray(data) ? data : data.data || []);
     } catch (e) {

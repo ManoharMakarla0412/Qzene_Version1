@@ -23,6 +23,7 @@ import { DifficultyLevel, Recipe, RecipeType } from "@/types";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRecipeMaker } from "../../hooks/useRecipeMaker";
+import { API_URL } from "@/lib/constants";
 
 interface CreateRecipeProps {
   isEditing?: boolean;
@@ -97,7 +98,7 @@ const CreateRecipe = ({
     const fetchEnums = async () => {
       try {
         const cuisineRes = await fetch(
-          "http://localhost:5001/api/v1/admin/enums/Cuisine",
+          `${API_URL}/api/v1/admin/enums/Cuisine`,
           {
             credentials: "include",
           }
@@ -108,7 +109,7 @@ const CreateRecipe = ({
         }
 
         const categoryRes = await fetch(
-          "http://localhost:5001/api/v1/admin/enums/Culinary%20Classification",
+          "${API_URL}/api/v1/admin/enums/Culinary%20Classification",
           { credentials: "include" }
         );
         const categoryData = await categoryRes.json();
@@ -117,7 +118,7 @@ const CreateRecipe = ({
         }
 
         const recipeTypeRes = await fetch(
-          "http://localhost:5001/api/v1/admin/enums/Dietary",
+          `${API_URL}/api/v1/admin/enums/Dietary`,
           {
             credentials: "include",
           }
@@ -201,7 +202,6 @@ const CreateRecipe = ({
   ]);
 
   const handleInstructionsProcessed = (stepInstructions: InstructionStep[]) => {
-    console.log("Instructions processed:", stepInstructions);
     setAllInstructionsData((prevInstructions) => {
       const combinedInstructions = [...prevInstructions];
       stepInstructions.forEach((newInstruction) => {
@@ -283,18 +283,12 @@ const CreateRecipe = ({
 
   const collectAllInstructions = (): InstructionStep[] => {
     if (allInstructionsData.length > 0) {
-      console.log("Using pre-collected instructions:", allInstructionsData);
       return allInstructionsData;
     }
     let collectedInstructions: InstructionStep[] = [];
     let stepCounter = 1;
-    console.log("Collecting instructions from recipe steps:", recipeSteps);
     recipeSteps.forEach((step) => {
       if (step.additionalData?.instructions?.Instructions) {
-        console.log(
-          `Step ${step.id} has ${step.additionalData.instructions.Instructions.length} instructions:`,
-          step.additionalData.instructions.Instructions
-        );
         step.additionalData.instructions.Instructions.forEach(
           (instrObj: any) => {
             collectedInstructions.push({
@@ -311,17 +305,10 @@ const CreateRecipe = ({
         console.log(`Step ${step.id} has no structured instructions`);
       }
     });
-    console.log("Collected instructions:", collectedInstructions);
     return collectedInstructions;
   };
 const handleSubmit = async (e?: React.FormEvent) => {
   if (e) e.preventDefault();
-  console.log("Starting handleSubmit", {
-    user,
-    recipeData,
-    containers,
-    recipeSteps,
-  });
 
   if (!user || !user.id) {
     toast({
@@ -438,16 +425,11 @@ const handleSubmit = async (e?: React.FormEvent) => {
     formData.append("image", imageFile);
   }
 
-  // Debug FormData contents
-  for (let [key, value] of formData.entries()) {
-    console.log(`FormData Entry: ${key} =`, value);
-  }
-
   // Remove the Content-Type header - let the browser set it automatically
   const response = await fetch(
     isEditing && initialData?.id
-      ? `http://localhost:5001/api/v1/admin/recipes/${initialData.id}`
-      : "http://localhost:5001/api/v1/admin/recipes",
+      ? `${API_URL}/api/v1/admin/recipes/${initialData.id}`
+      : "${API_URL}/api/v1/admin/recipes",
     {
       method: isEditing ? "PUT" : "POST",
       credentials: "include",
@@ -455,10 +437,8 @@ const handleSubmit = async (e?: React.FormEvent) => {
     }
   );
 
-    console.log("API response status:", response.status);
 
     const data = await response.json();
-    console.log("API response data:", data);
 
     if (!data.success) {
       throw new Error(

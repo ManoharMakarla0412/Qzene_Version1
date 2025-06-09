@@ -153,10 +153,10 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-.marquee-container {
+/* .marquee-container {
   overflow: hidden;
   white-space: nowrap;
-  max-height: 2rem; /* Constrain marquee height to prevent overflow */
+  max-height: 2rem; 
 }
 
 .marquee-content {
@@ -166,7 +166,7 @@
 
 .marquee-reverse {
   animation: marquee-reverse 50s linear infinite;
-}
+} */
 
 @keyframes marquee {
   from { transform: translateX(0); }
@@ -284,3 +284,21 @@
     --max-content-width: 2000px;
   }
 }
+
+/* DELETE THIS ENTIRE BLOCK */
+.marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+  max-height: 2rem; /* <-- THIS IS THE PROBLEM */
+}
+
+/* You can also delete these, as they are unused */
+.marquee-content {
+  display: inline-block;
+  animation: marquee 50s linear infinite;
+}
+
+.marquee-reverse {
+  animation: marquee-reverse 50s linear infinite;
+}
+/* END OF BLOCK TO DELETE */

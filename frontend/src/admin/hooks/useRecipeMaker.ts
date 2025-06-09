@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Container, Ingredient, RecipeData, RecipeStep } from '@/types/recipeMaker';
 import { useToast } from './use-toast';
+import { API_URL } from '@/lib/constants';
 
 export const useRecipeMaker = () => {
   const { toast } = useToast();
@@ -36,7 +37,6 @@ export const useRecipeMaker = () => {
   // Initialize recipe data from existing recipe
   const initializeRecipeData = (recipeData: any) => {
     try {
-      console.log("Initializing recipe from data:", recipeData);
 
       // Set containers with ingredients
       if (recipeData.containers && Array.isArray(recipeData.containers)) {
@@ -51,13 +51,11 @@ export const useRecipeMaker = () => {
           }
         });
         setContainers(updatedContainers);
-        console.log("Containers updated with recipe data");
       }
 
       // Set recipe steps
       if (recipeData.steps && Array.isArray(recipeData.steps)) {
         setRecipeSteps(recipeData.steps);
-        console.log("Recipe steps initialized from data");
       }
     } catch (error) {
       console.error("Error initializing recipe data:", error);
@@ -68,7 +66,7 @@ export const useRecipeMaker = () => {
   useEffect(() => {
     const fetchIngredients = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/v1/admin/ingredients', {
+        const response = await fetch(`${API_URL}/api/v1/admin/ingredients`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

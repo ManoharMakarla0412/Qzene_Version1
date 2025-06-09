@@ -11,6 +11,7 @@ import { Bell, Search, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import { API_URL } from '@/lib/constants';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -20,13 +21,12 @@ const Index = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/v1/admin/enums/categories', {
+        const response = await fetch(`${API_URL}/api/v1/admin/enums/categories`, {
           method: "GET",
           credentials: "include", // Send JWT cookie
           headers: { "Content-Type": "application/json" }, // If token is stored in user
         });
 
-        console.log('Categories:', response);
       } catch (error) {
         toast.error('Failed to fetch data');
         if (error.response?.status === 401 || error.response?.status === 403) {

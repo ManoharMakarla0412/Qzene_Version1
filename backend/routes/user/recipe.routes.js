@@ -6,7 +6,7 @@ const {
   getAllRecipes,
   updateRecipeStatus, 
   deleteRecipe
-} = require('../controllers/recipe.controller');
+} = require('../../controllers/recipe.controller');
 
 const router = express.Router();
 

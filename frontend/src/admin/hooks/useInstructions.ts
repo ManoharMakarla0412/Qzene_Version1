@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { RecipeStep, Ingredient, InstructionStep } from "@/types/recipeMaker";
 import { Instruction } from "@/types/instruction";
+import { API_URL } from "@/lib/constants";
 
 interface UseInstructionsProps {
   recipeSteps: RecipeStep[];
@@ -38,7 +39,7 @@ export const useInstructions = ({
   useEffect(() => {
     const fetchInstructions = async () => {
       try {
-        const response = await fetch("http://localhost:5001/api/v1/admin/enums/Instructions", {
+        const response = await fetch(`${API_URL}/api/v1/admin/enums/Instructions`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -150,9 +151,6 @@ export const useInstructions = ({
           },
         },
       });
-
-      console.log(`Added instruction to step ${safeCurrentStepData.id}:`, instruction.name);
-      console.log(`Updated instructions array:`, updatedInstructions);
     }
   };
 
@@ -187,9 +185,6 @@ export const useInstructions = ({
           },
         },
       });
-
-      console.log(`Added ingredient to step ${safeCurrentStepData.id}:`, ingredientText);
-      console.log(`Updated instructions array:`, updatedInstructions);
     }
   };
 
@@ -231,9 +226,6 @@ export const useInstructions = ({
           },
         },
       });
-
-      console.log(`Removed instruction from step ${safeCurrentStepData.id}:`, instructionText);
-      console.log(`Updated instructions array:`, updatedInstructions);
     }
   };
 
