@@ -3,17 +3,17 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/user.model');
 const { generateToken } = require('../config/utils.config');
 const cloudinary = require('../config/cloudinary.config');
-
+const jwt = require('jsonwebtoken')
 // SIGNUP CONTROLLER
 const signup = async (req, res) => {
   try {
     const { username, email, password, roles, name, bio, avatarUrl } = req.body;
 
-    if (!username || !email || !password || !roles) {
+    if (!username || !email || !password) {
       return res.status(400).json({ message: 'Please fill all required fields' });
     }
 
-    const allowedRoles = ['user', 'chef'];
+    const allowedRoles = ['user', 'chef', 'admin'];
     const invalidRoles = roles.filter(role => !allowedRoles.includes(role));
     if (invalidRoles.length > 0) {
       return res.status(403).json({ message: `You are not allowed to register with role(s): ${invalidRoles.join(', ')}` });
@@ -23,7 +23,6 @@ const signup = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: 'Email or username already in use' });
     }
-
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
@@ -56,32 +55,42 @@ const signup = async (req, res) => {
     res.status(500).json({ message: 'Server error during signup' });
   }
 };
+ 
 
 const login = async (req, res) => {
   try {
-    console.log('Login start');
     const { email, password } = req.body;
 
     if (!email || !password) {
-      console.log('Missing email or password');
       return res.status(400).json({ message: 'Please provide email and password' });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      console.log('User not found');
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      console.log('Password mismatch');
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    console.log('Generating token...');
-    generateToken(user, res);
-    console.log('Token generated and cookie set');
+    // Generate JWT
+    const token = jwt.sign(
+      { _id: user._id, roles: user.roles },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' } // Token expires in 7 days
+    );
+
+    // Set JWT in cookie
+    res.cookie('jwt', token, {
+      httpOnly: true, // Prevents client-side JavaScript access
+      secure: process.env.NODE_ENV === 'production', // Secure in production (HTTPS), false in development
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-origin in production, 'lax' for dev
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+      path: '/', // Cookie accessible across the site
+    });
+
 
     res.status(200).json({
       message: 'Login successful',
@@ -101,11 +110,19 @@ const login = async (req, res) => {
 
 const logout = (req, res) => {
   try {
-    res.cookie("jwt", "", { maxAge: 0 });
-    res.status(200).json({ message: "Logged out successfully" });
+    const cookies = req.cookies;
+    for (const cookieName in cookies) {
+      res.clearCookie(cookieName, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        path: '/',
+      });
+    }
+    res.status(200).json({ message: 'Logged out successfully' });
   } catch (error) {
-    console.log("Error in logout controller", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error('Error in logout controller:', error.message);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 };
 
@@ -144,15 +161,20 @@ const updateProfile = async (req, res) => {
 };
 
 const checkAuth = async (req, res) => {
-  const token = req.cookies.jwt;
   try {
     if (!req.user) {
-      return res.status(401).json({ message: "Not authenticated" });
+      return res.status(401).json({ message: 'Not authenticated' });
     }
-    res.status(200).json(req.user);
+    res.status(200).json({
+      id: req.user._id,
+      username: req.user.username,
+      email: req.user.email,
+      roles: req.user.roles,
+      profile: req.user.profile,
+    });
   } catch (error) {
-    console.log("Error in checkAuth controller", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error('Check auth error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 

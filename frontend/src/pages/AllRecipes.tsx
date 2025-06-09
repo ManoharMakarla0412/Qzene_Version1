@@ -26,7 +26,7 @@ const AllRecipes = () => {
   const fetchRecipes = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/recipes");
+      const res = await fetch("http://localhost:5001/api/recipes");
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setRecipes(data.data);

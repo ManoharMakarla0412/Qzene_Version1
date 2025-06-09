@@ -1,39 +1,30 @@
-const swaggerJSDoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
+const swaggerJsDoc = require('swagger-jsdoc');
 
-const options = {
-  definition: {
+const swaggerOptions = {
+  swaggerDefinition: {
     openapi: '3.0.0',
     info: {
-      title: 'Authentication API Docs',
+      title: 'Qzene API',
       version: '1.0.0',
-      description: 'API documentation for role-based authentication system',
+      description: 'API for Qzene Admin and User Panels',
     },
-    servers: [
-      {
-        url: 'http://localhost:5000',
-      },
-    ],
+    servers: [{ url: 'http://localhost:5001' }],
     components: {
       securitySchemes: {
-        cookieAuth: {
-          type: 'apiKey',
-          in: 'cookie',
-          name: 'jwt',
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
         },
       },
     },
-    security: [{ cookieAuth: [] }],
   },
-  apis: ['./swagger/*.js'], // Path to docs in the swagger folder
+  apis: [
+    './routes/admin/*.js', // Admin routes
+    './routes/users/*.js',  // User routes
+  ],
 };
 
-const swaggerSpec = swaggerJSDoc(options);
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
-const setupSwagger = (app) => {
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-};
-
-module.exports = {
-  setupSwagger,
-};
+module.exports = swaggerDocs;

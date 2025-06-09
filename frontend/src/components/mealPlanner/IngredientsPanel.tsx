@@ -30,7 +30,7 @@ const IngredientsPanel = ({ ingredients, onDragStart }: IngredientsPanelProps) =
         </Button>
       </div>
       
-      <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-[480px] pr-2">
+      <div className="grid grid-cols-2 gap-2  max-h-[480px] pr-2">
         {ingredients.map(ingredient => (
           <IngredientItem 
             key={ingredient.id}
