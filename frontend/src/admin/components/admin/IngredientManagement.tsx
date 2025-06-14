@@ -137,7 +137,7 @@ export const IngredientManagement = () => {
         <h1 className="text-3xl font-bold bg-gradient-to-r from-[#F25A38] to-[#CD1265] bg-clip-text text-transparent">
           Ingredient Management
         </h1>
-        <Button className="qzene-btn-primary" onClick={() => setShowAddForm(true)}>
+        <Button className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90" onClick={() => setShowAddForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Ingredient
         </Button>
@@ -273,7 +273,7 @@ export const IngredientManagement = () => {
                 <Button type="button" variant="outline" onClick={() => setShowAddForm(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" className="qzene-btn-primary" disabled={loading}>
+                <Button type="submit" className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90" disabled={loading}>
                   {loading ? 'Adding...' : 'Add Ingredient'}
                 </Button>
               </div>
@@ -314,7 +314,7 @@ export const IngredientManagement = () => {
                   <span className="font-medium">{ingredient.createdBy}</span>
                 </div>
                 <div className="flex justify-between pt-3 border-t space-x-2">
-                  <Button size="sm" className="qzene-btn-primary flex-1">
+                  <Button size="sm" className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90 flex-1">
                     <Edit className="h-3 w-3 mr-1" />
                     Edit
                   </Button>

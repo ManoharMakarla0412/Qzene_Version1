@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Edit, Trash2, Star, Filter } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Star, Filter, X } from "lucide-react";
 import { toast } from "sonner"; // Using sonner for toast notifications
 import { API_URL } from "@/lib/constants";
+import { useRecipe } from "@/contexts/RecipeContext";
 
 // --- Step 1: Define TypeScript types for clarity and safety ---
 
@@ -38,59 +39,25 @@ interface ApiRecipe {
 }
 
 export const RecipeManagement = () => {
-  const [recipes, setRecipes] = useState<DisplayRecipe[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { recipes: apiRecipes, loading, refresh } = useRecipe();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedRecipe, setSelectedRecipe] = useState<DisplayRecipe | null>(null);
   const navigate = useNavigate();
 
-  // --- Step 2: Fetch and transform data from the API ---
-  useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await fetch(`${API_URL}/api/v1/admin/recipes`, {
-            credentials: 'include', // Important for sending cookies/auth headers
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch recipes. Please check your connection.");
-        }
-
-        const result = await response.json();
-        
-        if (result.success && Array.isArray(result.data)) {
-          // Transform API data into the shape our component understands
-          const transformedData = result.data.map((recipe: ApiRecipe): DisplayRecipe => ({
-            id: recipe._id,
-            name: recipe.name,
-            type: recipe.category ? recipe.category.replace("_", " ") : 'Uncategorized',
-            chef: `User ${recipe.user_id.substring(0, 8)}...`, // Placeholder for Chef Name
-            price: recipe.price,
-            status: 'approved', // MOCK DATA: API doesn't have status, defaulting to approved
-            rating: 4.5 + Math.random() * 0.5, // MOCK DATA
-            orders: Math.floor(Math.random() * 250), // MOCK DATA
-            tags: [recipe.cuisine_type, recipe.recipe_type].filter(Boolean),
-            image: recipe.image || "/placeholder.svg", // Fallback for null images
-          }));
-          setRecipes(transformedData);
-        } else {
-            throw new Error(result.message || "Invalid data format from API.");
-        }
-      } catch (err: any) {
-        setError(err.message);
-        toast.error(err.message || "An error occurred while fetching data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRecipes();
-  }, []);
-
+  // Transform API recipes into display format
+  const recipes: DisplayRecipe[] = apiRecipes.map((recipe: any): DisplayRecipe => ({
+    id: recipe._id,
+    name: recipe.name,
+    type: recipe.category ? recipe.category.replace("_", " ") : 'Uncategorized',
+    chef: `User ${recipe.user_id?.substring(0, 8) || 'Unknown'}...`,
+    price: recipe.price || 0,
+    status: 'approved', // MOCK DATA: API doesn't have status, defaulting to approved
+    rating: 4.5 + Math.random() * 0.5, // MOCK DATA
+    orders: Math.floor(Math.random() * 250), // MOCK DATA
+    tags: [recipe.cuisine_type, recipe.recipe_type].filter(Boolean),
+    image: recipe.image || "/placeholder.svg",
+  }));
 
   // --- Step 3: Filtering logic and UI helper functions ---
   const filteredRecipes = recipes.filter(recipe => {
@@ -116,7 +83,6 @@ export const RecipeManagement = () => {
   
   // --- Step 4: Handle Edit and Delete ---
   const handleEdit = (recipeId: string) => {
-    // Navigate to a dedicated edit page. You'll need to create this route and component.
     navigate(`/admin/edit-recipe/${recipeId}`);
   };
 
@@ -137,8 +103,7 @@ export const RecipeManagement = () => {
         const result = await response.json();
         
         if (result.success) {
-            // Remove the recipe from the state to update the UI instantly
-            setRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== recipeId));
+            refresh(); // Refresh the recipes list after successful deletion
             toast.success("Recipe deleted successfully!");
         } else {
             throw new Error(result.message || "Deletion failed.");
@@ -149,16 +114,19 @@ export const RecipeManagement = () => {
     }
   };
 
+  const handleRecipeClick = (recipe: DisplayRecipe) => {
+    setSelectedRecipe(recipe);
+  };
+
+  const closeModal = () => {
+    setSelectedRecipe(null);
+  };
+
   // --- Step 5: Render the component with loading/error states and dynamic data ---
 
   // Display a loading state
   if (loading) {
     return <div className="flex justify-center items-center h-64">Loading recipes...</div>;
-  }
-  
-  // Display an error state
-  if (error) {
-    return <div className="text-red-600 bg-red-100 p-4 rounded-lg text-center">{error}</div>;
   }
   
   // Dynamic Stat Calculations
@@ -178,7 +146,7 @@ export const RecipeManagement = () => {
           <p className="text-gray-600 mt-2">Manage all recipes in your marketplace</p>
         </div>
         <Button
-          className="qzene-btn-primary"
+          className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90"
           onClick={() => navigate("/admin/create-recipe")}
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -251,7 +219,11 @@ export const RecipeManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredRecipes.length > 0 ? (
           filteredRecipes.map((recipe) => (
-            <Card key={recipe.id} className="qzene-card hover:shadow-lg transition-all duration-200 group flex flex-col">
+            <Card 
+              key={recipe.id} 
+              className="qzene-card hover:shadow-lg transition-all duration-200 group flex flex-col cursor-pointer"
+              onClick={() => handleRecipeClick(recipe)}
+            >
                 <CardHeader className="pb-3">
                   <div className="relative">
                       <img src={recipe.image} alt={recipe.name} className="w-full h-40 object-cover rounded-md mb-3" />
@@ -316,24 +288,98 @@ export const RecipeManagement = () => {
                     </Button>
                 </div>
             </Card>
-        ))
-      ) : (
-        <div className="col-span-full text-center py-10">
+          ))
+        ) : (
+          <div className="col-span-full text-center py-10">
             <p className="text-gray-500">No recipes found that match your criteria.</p>
-        </div>
-      )}
+          </div>
+        )}
       </div>
 
-      {/* Pagination (This remains static for now) */}
-      {/* <div className="flex justify-center pt-6">
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm">Previous</Button>
-          <Button size="sm" className="qzene-btn-primary">1</Button>
-          <Button variant="outline" size="sm">2</Button>
-          <Button variant="outline" size="sm">3</Button>
-          <Button variant="outline" size="sm">Next</Button>
+      {/* Recipe Details Modal */}
+      {selectedRecipe && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="relative">
+              <img 
+                src={selectedRecipe.image} 
+                alt={selectedRecipe.name} 
+                className="w-full h-64 object-cover rounded-t-xl"
+              />
+              <button 
+                onClick={closeModal}
+                className="absolute top-4 right-4 bg-white rounded-full p-2 hover:bg-gray-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <div className="absolute top-4 left-4">
+                {getStatusBadge(selectedRecipe.status)}
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <h2 className="text-2xl font-bold text-gray-900">{selectedRecipe.name}</h2>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Type</p>
+                  <p className="font-medium">{selectedRecipe.type}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Price</p>
+                  <p className="font-medium">
+                    {selectedRecipe.price === 0 ? (
+                      <Badge className="bg-green-100 text-green-800">Free</Badge>
+                    ) : (
+                      `₹${selectedRecipe.price.toFixed(2)}`
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Rating</p>
+                  <div className="flex items-center">
+                    <Star className="h-4 w-4 text-yellow-400 mr-1 fill-current" />
+                    <span className="font-medium">{selectedRecipe.rating.toFixed(1)}</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Orders</p>
+                  <p className="font-medium">{selectedRecipe.orders}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500 mb-2">Tags</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedRecipe.tags.map((tag, index) => (
+                    <Badge key={index} variant="outline">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90 flex-1"
+                  onClick={() => handleEdit(selectedRecipe.id)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Recipe
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-1"
+                  onClick={() => handleDelete(selectedRecipe.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Recipe
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div> */}
+      )}
     </div>
   );
 };

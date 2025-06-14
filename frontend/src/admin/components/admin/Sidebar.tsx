@@ -37,14 +37,14 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
   return (
     <div
       className={cn(
-        "h-screen flex flex-col text-white transition-all duration-300",
-        "bg-[#CD1265]", // Set primary background color
+        "h-screen flex flex-col text-[#CD1265] transition-all duration-300",
+        "bg-white", // Set background color to white
         isCollapsed ? "w-20" : "w-64"
       )}
     >
       {/* Header */}
       <div className={cn(
-        "flex items-center p-4 h-[68px] border-b border-white/20", // Use subtle white border
+        "flex items-center p-4 h-[68px] border-b border-[#CD1265]/20", // Use subtle border
         isCollapsed ? "justify-center" : "justify-between"
       )}>
         {!isCollapsed && (
@@ -81,10 +81,10 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={cn(
-                  "w-full flex items-center p-3 text-left font-medium text-white transition-all duration-200 rounded-lg",
+                  "w-full flex items-center p-3 text-left font-medium text-[#CD1265] transition-all duration-200 rounded-lg",
                   isActive
-                    ? "bg-[#F25A38] font-bold" // Active state with accent color
-                    : "hover:bg-[#F25A38]",    // Hover state with accent color
+                    ? "bg-[#F25A38] font-bold text-white" // Active state with orange color
+                    : "hover:bg-[#F25A38] hover:text-white",    // Hover state with orange color
                   isCollapsed ? "justify-center" : "px-4"
                 )}
                 title={isCollapsed ? item.label : undefined}
@@ -94,8 +94,8 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
                 />
                 {!isCollapsed && (
                   <div className="flex-1 text-left">
-                    <div className="font-medium">{item.label}</div>
-                    <div className="text-xs text-white/70 mt-1">
+                    <div className="font-medium text-[#CD1265]">{item.label}</div>
+                    <div className="text-xs text-[#CD1265]/70 mt-1">
                       {item.description}
                     </div>
                   </div>
@@ -107,22 +107,22 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
       </nav>
 
       {/* User Profile Section */}
-      <div className={cn("p-4 border-t border-white/20", isCollapsed ? "flex justify-center" : "")}>
+      <div className={cn("p-4 border-t border-[#CD1265]/20", isCollapsed ? "flex justify-center" : "")}>
         <div className={cn(
           "flex items-center rounded-lg p-2 transition-colors",
           isCollapsed ? "justify-center w-12 h-12" : "space-x-3 w-full"
         )}>
-          <div className="w-8 h-8 bg-[#F25A38] rounded-full flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 bg-[#CD1265] rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white text-sm font-medium">
               {user?.username?.charAt(0)?.toUpperCase() || "U"}
             </span>
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-white truncate">
+              <div className="text-sm font-medium text-[#CD1265] truncate">
                 {user?.username || "User"}
               </div>
-              <div className="text-xs text-white/70 truncate">
+              <div className="text-xs text-[#CD1265]/70 truncate">
                 {user?.email || "user@example.com"}
               </div>
             </div>

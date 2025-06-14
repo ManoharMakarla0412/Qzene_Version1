@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,7 +77,7 @@ export const UserManagement = () => {
         <h1 className="text-3xl font-bold bg-gradient-to-r from-[#F25A38] to-[#CD1265] bg-clip-text text-transparent">
           User Management
         </h1>
-        <Button className="qzene-btn-primary">
+        <Button className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90">
           <UserPlus className="h-4 w-4 mr-2" />
           Invite User
         </Button>

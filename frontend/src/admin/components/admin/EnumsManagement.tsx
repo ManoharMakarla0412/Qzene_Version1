@@ -182,7 +182,7 @@ export const EnumsManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Enums Management</h1>
-        <Button onClick={handleOpenCreateModal}>
+        <Button className="bg-[#CD1265] text-white" onClick={handleOpenCreateModal}>
           <Plus className="h-4 w-4 mr-2" />
           Create Enum
         </Button>
@@ -210,8 +210,8 @@ export const EnumsManagement = () => {
                     onClick={() => setSelectedCategory(category)}
                     className={`w-full text-left p-3 rounded-lg transition-colors ${
                       selectedCategory === category
-                        ? "bg-emerald-100 text-emerald-800 font-semibold border-l-4 border-emerald-500"
-                        : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                        ? "bg-[#F25A38] text-white font-semibold border-l-4 border-[#F25A38]"
+                        : "bg-gray-50 hover:bg-[#F25A38] hover:text-white text-gray-700"
                     }`}
                   >
                     {category.replace(/_/g, " ")}
@@ -238,7 +238,7 @@ export const EnumsManagement = () => {
                    )}
                 </div>
                 {selectedCategory && (
-                  <Button variant="outline" onClick={handleOpenAddModal}>
+                  <Button variant="outline" className="bg-[#CD1265] text-white" onClick={handleOpenAddModal}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Value
                   </Button>
@@ -319,7 +319,7 @@ export const EnumsManagement = () => {
             <DialogClose asChild>
               <Button type="button" variant="secondary">Cancel</Button>
             </DialogClose>
-            <Button onClick={() => handleModalSubmit('create')} disabled={isSubmitting}>
+            <Button onClick={() => handleModalSubmit('create')} disabled={isSubmitting} className="bg-[#CD1265] text-white">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Enum
             </Button>
@@ -356,7 +356,7 @@ export const EnumsManagement = () => {
             <DialogClose asChild>
               <Button type="button" variant="secondary">Cancel</Button>
             </DialogClose>
-            <Button onClick={() => handleModalSubmit('add')} disabled={isSubmitting}>
+            <Button onClick={() => handleModalSubmit('add')} disabled={isSubmitting} className="bg-[#CD1265] text-white">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Add Value
             </Button>

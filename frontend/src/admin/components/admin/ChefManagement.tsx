@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,7 +69,7 @@ export const ChefManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Chef Management</h1>
-        <Button className="bg-emerald-600 hover:bg-emerald-700">
+        <Button className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90">
           <Users className="h-4 w-4 mr-2" />
           Invite Chef
         </Button>

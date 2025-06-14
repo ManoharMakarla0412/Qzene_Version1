@@ -281,17 +281,17 @@ export const Dashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="qzene-btn-primary p-4 rounded-xl text-center">
+            <button className="qzene-btn-primary p-4 rounded-xl text-center hover:bg-gradient-to-r hover:from-[#F25A38]/10 hover:to-[#CD1265]/10 transition-all duration-200">
               <ChefHat className="h-6 w-6 mx-auto mb-2" />
               <div className="font-medium">Add Recipe</div>
               <div className="text-sm opacity-80">Create new recipe</div>
             </button>
-            <button className="qzene-btn-secondary p-4 rounded-xl text-center">
+            <button className="qzene-btn-secondary p-4 rounded-xl text-center hover:bg-gradient-to-r hover:from-[#F25A38]/10 hover:to-[#CD1265]/10 transition-all duration-200">
               <Users className="h-6 w-6 mx-auto mb-2" />
               <div className="font-medium">Manage Chefs</div>
               <div className="text-sm opacity-80">View chef profiles</div>
             </button>
-            <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 p-4 rounded-xl text-center transition-colors">
+            <button className="qzene-btn-secondary p-4 rounded-xl text-center hover:bg-gradient-to-r hover:from-[#F25A38]/10 hover:to-[#CD1265]/10 transition-all duration-200">
               <Settings className="h-6 w-6 mx-auto mb-2" />
               <div className="font-medium">System Settings</div>
               <div className="text-sm opacity-80">Configure enums</div>
