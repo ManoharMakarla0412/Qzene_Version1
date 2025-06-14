@@ -11,6 +11,7 @@ import {
   Package,
   UserCheck,
   ArrowLeft,
+  CheckCircle,
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -23,6 +24,7 @@ interface SidebarProps {
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, description: "Overview & Analytics" },
   { id: "recipes", label: "Recipes", icon: ChefHat, description: "Recipe Management" },
+  { id: "verify-recipes", label: "Verify Recipe", icon: CheckCircle, description: "Recipe Verification" },
   { id: "ingredients", label: "Ingredients", icon: Package, description: "Ingredient Management" },
   { id: "orders", label: "Orders", icon: ShoppingCart, description: "Order Tracking" },
   { id: "chefs", label: "Chefs", icon: Users, description: "Chef Management" },

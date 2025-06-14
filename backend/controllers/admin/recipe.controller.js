@@ -205,3 +205,66 @@ exports.getAllRecipes = async (req, res) => {
     });
   }
 };
+
+// Get pending recipes
+exports.getPendingRecipes = async (req, res) => {
+  try {
+    const recipes = await Recipe.find({ status: 'pending' })
+      .select('-__v')
+      .sort({ created_at: -1 });
+
+    res.status(200).json({
+      success: true,
+      message: "Pending recipes fetched successfully",
+      data: recipes,
+    });
+  } catch (error) {
+    console.error("Error fetching pending recipes:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch pending recipes",
+    });
+  }
+};
+
+// Verify recipe (approve/reject)
+exports.verifyRecipe = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action } = req.body;
+
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid action. Must be either 'approve' or 'reject'"
+      });
+    }
+
+    const status = action === 'approve' ? 'approved' : 'rejected';
+    
+    const recipe = await Recipe.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+
+    if (!recipe) {
+      return res.status(404).json({
+        success: false,
+        message: "Recipe not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Recipe ${action}d successfully`,
+      data: recipe
+    });
+  } catch (error) {
+    console.error("Error verifying recipe:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to verify recipe"
+    });
+  }
+};

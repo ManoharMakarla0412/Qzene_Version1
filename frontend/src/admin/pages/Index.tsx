@@ -7,6 +7,7 @@ import { OrderManagement } from "../components/admin/OrderManagement";
 import { ChefManagement } from "../components/admin/ChefManagement";
 import { UserManagement } from "../components/admin/UserManagement";
 import { EnumsManagement } from "../components/admin/EnumsManagement";
+import { RecipeVerification } from "../components/admin/RecipeVerification";
 import { Bell, Search, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,6 +49,8 @@ const Index = () => {
         return <Dashboard />;
       case "recipes":
         return <RecipeManagement />;
+      case "verify-recipes":
+        return <RecipeVerification />;
       case "ingredients":
         return <IngredientManagement />;
       case "orders":
@@ -69,6 +72,8 @@ const Index = () => {
         return "Dashboard";
       case "recipes":
         return "Recipe Management";
+      case "verify-recipes":
+        return "Recipe Verification";
       case "ingredients":
         return "Ingredient Management";
       case "orders":

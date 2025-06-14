@@ -281,4 +281,10 @@ router.get('/', auth, recipeController.getAllRecipes);
 router.post('/', auth, uploadImage, recipeController.createRecipe); 
 router.put('/:id', auth, uploadImage, recipeController.updateRecipe);
 
+// Get pending recipes
+router.get('/recipes/pending', auth, recipeController.getPendingRecipes);
+
+// Verify recipe (approve/reject)
+router.post('/recipes/:id/verify', auth, recipeController.verifyRecipe);
+
 module.exports = router;

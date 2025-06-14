@@ -57,6 +57,11 @@ const adminrecipeSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
   created_at: {
     type: Date,
     default: Date.now,
