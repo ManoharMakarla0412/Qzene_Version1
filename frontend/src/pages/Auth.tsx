@@ -172,7 +172,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     await login(email, password);
     toast.success('Account created! Welcome to Qzene!');
-    navigate('/');
+    navigate('/admin');
   } catch {
     toast.error('Something went wrong. Please try again.');
   } finally {
