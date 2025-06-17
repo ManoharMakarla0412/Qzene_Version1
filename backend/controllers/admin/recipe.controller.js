@@ -6,7 +6,6 @@ exports.generateRecipeDetails = async (req, res) => {
     const { recipeId } = req.params;
     const recipe = await Recipe.findById(recipeId);
     
-    console.log('Recipe found:', recipe);
     if (!recipe) {
       return res.status(404).json({
         success: false,
@@ -15,7 +14,6 @@ exports.generateRecipeDetails = async (req, res) => {
     }
 
     const result = await openAIService.generateRecipeDetails(recipe); 
-    console.log('OpenAI result:', result);
 
     recipe.openai_generated_content = {
       instructions: result.instructions,

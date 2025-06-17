@@ -37,7 +37,6 @@ const generateRecipeDetails = async (recipeData) => {
     });
 
     let result = response.choices[0].message.content.trim();
-    console.log('Raw OpenAI response:', result);
 
     // Clean up markdown code blocks if present
     if (result.startsWith('```json')) {
