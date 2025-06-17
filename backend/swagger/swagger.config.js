@@ -8,7 +8,10 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'API for Qzene Admin and User Panels',
     },
-    servers: [{ url: 'http://localhost:5001' }],
+    servers: [
+      { url: 'http://localhost:5001' },       // Local server
+      { url: 'https://osaw.in/v1/' },         // Production server
+    ],
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -20,7 +23,7 @@ const swaggerOptions = {
     },
   },
   apis: [
-    './routes/admin/*.js', // Admin routes
+    './routes/admin/*.js',  // Admin routes
     './routes/users/*.js',  // User routes
   ],
 };
