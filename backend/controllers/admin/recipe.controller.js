@@ -232,6 +232,63 @@ exports.updateRecipe = async (req, res) => {
 };
 
 
+// Update recipe's generated content
+exports.updateGeneratedContent = async (req, res) => {
+  try {
+    const { recipeId } = req.params;
+    const { openai_generated_content } = req.body;
+
+    // Validate input
+    if (!openai_generated_content || 
+        !openai_generated_content.instructions || 
+        !openai_generated_content.nutrition) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid generated content format'
+      });
+    }
+
+    // Find and update the recipe
+    const updatedRecipe = await Recipe.findByIdAndUpdate(
+      recipeId,
+      { 
+        $set: { 
+          openai_generated_content: {
+            instructions: openai_generated_content.instructions,
+            nutrition: {
+              protein: openai_generated_content.nutrition.protein || 0,
+              calories: openai_generated_content.nutrition.calories || 0,
+              carbs: openai_generated_content.nutrition.carbs || 0,
+              fat: openai_generated_content.nutrition.fat || 0
+            }
+          } 
+        } 
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedRecipe) {
+      return res.status(404).json({
+        success: false,
+        message: 'Recipe not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Generated content updated successfully',
+      data: updatedRecipe
+    });
+
+  } catch (error) {
+    console.error('Error updating generated content:', error);
+    return res.status(500).json({
+      success: false,
+      message: `Server error: ${error.message}`
+    });
+  }
+};
+
 exports.getAllRecipes = async (req, res) => {
   try {
     const recipes = await Recipe.find();

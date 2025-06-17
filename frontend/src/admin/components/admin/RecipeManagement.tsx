@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,50 +14,49 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
-import { toast } from "sonner"; // Using sonner for toast notifications
+import { toast } from "sonner";
 import { API_URL } from "@/lib/constants";
 import { useRecipe } from "@/contexts/RecipeContext";
 
-// --- Step 1: Define TypeScript types for clarity and safety ---
-
-// The structure of the data the component needs to display
 interface DisplayRecipe {
-  id: string; // a.k.a. _id from API
+  id: string;
   name: string;
-  type: string; // from category
-  chef: string; // from user_id (can be enhanced to show name)
+  type: string;
+  chef: string;
   price: number;
-  status: "approved" | "pending" | "rejected"; // This is mocked, as API doesn't provide it
-  rating: number; // Mocked
-  orders: number; // Mocked
+  status: "approved" | "pending" | "rejected";
+  rating: number;
+  orders: number;
   tags: string[];
   image: string;
-  openai_generated_content?: string; // Optional property for generated content
-}
-
-// The structure of the recipe object from your API
-interface ApiRecipe {
-  _id: string;
-  name: string;
-  category: string;
-  price: number;
-  user_id: string;
-  image: string | null;
-  cuisine_type: string;
-  recipe_type: string;
-  // You can add other fields from the API if needed
+  openai_generated_content?: {
+    instructions: string[];
+    nutrition: {
+      protein: number;
+      calories: number;
+      carbs: number;
+      fat: number;
+    };
+  };
 }
 
 export const RecipeManagement = () => {
   const { recipes: apiRecipes, loading, refresh } = useRecipe();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedRecipe, setSelectedRecipe] = useState<DisplayRecipe | null>(
-    null
-  );
+  const [selectedRecipe, setSelectedRecipe] = useState<DisplayRecipe | null>(null);
+  const [generationDialogOpen, setGenerationDialogOpen] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState<{
+    instructions: string[];
+    nutrition: {
+      protein: number;
+      calories: number;
+      carbs: number;
+      fat: number;
+    };
+  } | null>(null);
   const navigate = useNavigate();
 
-  // Transform API recipes into display format
   const recipes: DisplayRecipe[] = apiRecipes.map(
     (recipe: any): DisplayRecipe => ({
       id: recipe._id,
@@ -67,15 +66,15 @@ export const RecipeManagement = () => {
         : "Uncategorized",
       chef: `User ${recipe.user_id?.substring(0, 8) || "Unknown"}...`,
       price: recipe.price || 0,
-      status: "approved", // MOCK DATA: API doesn't have status, defaulting to approved
-      rating: 4.5 + Math.random() * 0.5, // MOCK DATA
-      orders: Math.floor(Math.random() * 250), // MOCK DATA
+      status: "approved",
+      rating: 4.5 + Math.random() * 0.5,
+      orders: Math.floor(Math.random() * 250),
       tags: [recipe.cuisine_type, recipe.recipe_type].filter(Boolean),
       image: recipe.image || "/placeholder.svg",
+      openai_generated_content: recipe.openai_generated_content,
     })
   );
 
-  // --- Step 3: Filtering logic and UI helper functions ---
   const filteredRecipes = recipes.filter((recipe) => {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch =
@@ -111,17 +110,12 @@ export const RecipeManagement = () => {
     }
   };
 
-  // --- Step 4: Handle Edit and Delete ---
   const handleEdit = (recipeId: string) => {
     navigate(`/admin/edit-recipe/${recipeId}`);
   };
 
   const handleDelete = async (recipeId: string) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this recipe? This action cannot be undone."
-      )
-    ) {
+    if (!window.confirm("Are you sure you want to delete this recipe?")) {
       return;
     }
     try {
@@ -133,27 +127,26 @@ export const RecipeManagement = () => {
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to delete the recipe.");
-      }
+      if (!response.ok) throw new Error("Failed to delete the recipe.");
 
       const result = await response.json();
-
       if (result.success) {
-        refresh(); // Refresh the recipes list after successful deletion
+        refresh();
         toast.success("Recipe deleted successfully!");
       } else {
         throw new Error(result.message || "Deletion failed.");
       }
     } catch (err: any) {
-      toast.error(
-        err.message || "An error occurred while deleting the recipe."
-      );
+      toast.error(err.message || "Error deleting recipe");
     }
   };
 
   const handleRecipeClick = (recipe: DisplayRecipe) => {
     setSelectedRecipe(recipe);
+  };
+
+  const closeModal = () => {
+    setSelectedRecipe(null);
   };
 
   const handleGenerate = async (recipeId: string) => {
@@ -169,39 +162,57 @@ export const RecipeManagement = () => {
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to generate recipe details.");
-      }
+      if (!response.ok) throw new Error("Failed to generate recipe details.");
 
       const result = await response.json();
-
       if (result.success) {
-        refresh(); // Refresh recipes to reflect updated data
-        toast.success("Recipe details generated successfully!");
-        // Update selectedRecipe if open
-        if (selectedRecipe && selectedRecipe.id === recipeId) {
-          setSelectedRecipe({
-            ...selectedRecipe,
-            openai_generated_content: result.data.openai_generated_content,
-          });
-        }
+        setGeneratedContent(result.data.openai_generated_content);
+        setGenerationDialogOpen(true);
       } else {
         throw new Error(result.message || "Generation failed.");
       }
     } catch (err: any) {
-      toast.error(
-        err.message || "An error occurred while generating recipe details."
-      );
+      toast.error(err.message || "Error generating details");
     }
   };
 
-  const closeModal = () => {
-    setSelectedRecipe(null);
+  const handleSaveGeneratedContent = async (recipeId: string) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/api/v1/admin/recipes/${recipeId}/save-content`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            openai_generated_content: generatedContent,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to save recipe details.");
+
+      const result = await response.json();
+      if (result.success) {
+        refresh();
+        toast.success("Recipe details saved successfully!");
+        setGenerationDialogOpen(false);
+        if (selectedRecipe && selectedRecipe.id === recipeId) {
+          setSelectedRecipe({
+            ...selectedRecipe,
+            openai_generated_content: generatedContent,
+          });
+        }
+      } else {
+        throw new Error(result.message || "Save failed.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Error saving details");
+    }
   };
 
-  // --- Step 5: Render the component with loading/error states and dynamic data ---
-
-  // Display a loading state
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -210,7 +221,6 @@ export const RecipeManagement = () => {
     );
   }
 
-  // Dynamic Stat Calculations
   const totalRecipes = recipes.length;
   const approvedCount = recipes.filter((r) => r.status === "approved").length;
   const pendingCount = recipes.filter((r) => r.status === "pending").length;
@@ -237,7 +247,7 @@ export const RecipeManagement = () => {
         </Button>
       </div>
 
-      {/* Stats Cards (Now Dynamic) */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="qzene-card">
           <CardContent className="pt-6">
@@ -330,7 +340,6 @@ export const RecipeManagement = () => {
                   <CardTitle className="text-lg group-hover:text-[#F25A38] transition-colors">
                     {recipe.name}
                   </CardTitle>
-                  {/* <p className="text-sm text-gray-500 mt-1">by {recipe.chef}</p> */}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 flex-grow">
@@ -477,6 +486,54 @@ export const RecipeManagement = () => {
                 </div>
               </div>
 
+              {/* Display existing generated content if available */}
+              {selectedRecipe.openai_generated_content && (
+                <div className="space-y-3 pt-2">
+                  <h3 className="font-semibold">Generated Content</h3>
+                  <div>
+                    <h4 className="text-sm font-medium">Instructions:</h4>
+                    <ol className="list-decimal pl-5 space-y-1 mt-1">
+                      {selectedRecipe.openai_generated_content.instructions.map(
+                        (step, i) => (
+                          <li key={i} className="text-sm">
+                            {step}
+                          </li>
+                        )
+                      )}
+                    </ol>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Nutrition:</h4>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <div>
+                        <span className="text-xs text-gray-500">Protein</span>
+                        <p className="text-sm">
+                          {selectedRecipe.openai_generated_content.nutrition.protein}g
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-500">Calories</span>
+                        <p className="text-sm">
+                          {selectedRecipe.openai_generated_content.nutrition.calories}kcal
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-500">Carbs</span>
+                        <p className="text-sm">
+                          {selectedRecipe.openai_generated_content.nutrition.carbs}g
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-500">Fat</span>
+                        <p className="text-sm">
+                          {selectedRecipe.openai_generated_content.nutrition.fat}g
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-3 pt-4">
                 <Button
                   className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90 flex-1"
@@ -500,6 +557,76 @@ export const RecipeManagement = () => {
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete Recipe
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generation Dialog */}
+      {generationDialogOpen && selectedRecipe && generatedContent && (
+        <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 space-y-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Generated Recipe Details
+                </h2>
+                <button
+                  onClick={() => setGenerationDialogOpen(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-lg mb-2">Instructions</h3>
+                <ol className="list-decimal pl-5 space-y-2">
+                  {generatedContent.instructions.map((step, index) => (
+                    <li key={index} className="text-gray-700">
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-lg mb-2">Nutrition Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Protein</p>
+                    <p className="font-medium">{generatedContent.nutrition.protein}g</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Calories</p>
+                    <p className="font-medium">{generatedContent.nutrition.calories}kcal</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Carbs</p>
+                    <p className="font-medium">{generatedContent.nutrition.carbs}g</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Fat</p>
+                    <p className="font-medium">{generatedContent.nutrition.fat}g</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setGenerationDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90 flex-1"
+                  onClick={() => handleSaveGeneratedContent(selectedRecipe.id)}
+                >
+                  Save
                 </Button>
               </div>
             </div>

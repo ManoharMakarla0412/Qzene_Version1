@@ -313,4 +313,88 @@ router.post(
   recipeController.generateRecipeDetails
 );
 
+
+/**
+ * @swagger
+ * /api/v1/admin/recipes/{recipeId}/save-content:
+ *   put:
+ *     summary: Update OpenAI generated content for a recipe
+ *     tags: [Recipes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: recipeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the recipe to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - openai_generated_content
+ *             properties:
+ *               openai_generated_content:
+ *                 type: object
+ *                 required:
+ *                   - instructions
+ *                   - nutrition
+ *                 properties:
+ *                   instructions:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                     example: ["Preheat oven to 350°F", "Mix ingredients in bowl"]
+ *                   nutrition:
+ *                     type: object
+ *                     required:
+ *                       - protein
+ *                       - calories
+ *                       - carbs
+ *                       - fat
+ *                     properties:
+ *                       protein:
+ *                         type: number
+ *                         example: 25
+ *                       calories:
+ *                         type: number
+ *                         example: 350
+ *                       carbs:
+ *                         type: number
+ *                         example: 40
+ *                       fat:
+ *                         type: number
+ *                         example: 12
+ *     responses:
+ *       200:
+ *         description: Generated content updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Recipe'
+ *       400:
+ *         description: Invalid input data
+ *       404:
+ *         description: Recipe not found
+ *       500:
+ *         description: Server error
+ */
+router.put(
+  '/:recipeId/save-content',
+  auth,
+  recipeController.updateGeneratedContent
+);
+
+
 module.exports = router;
