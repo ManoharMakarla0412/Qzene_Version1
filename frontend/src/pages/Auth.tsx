@@ -188,7 +188,7 @@ const SignupForm = () => {
               id="firstName"
               placeholder="First Name"
               value={firstName}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setFirstName(e.target.value)}
               required
             />
           </div>
