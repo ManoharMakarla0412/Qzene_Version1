@@ -456,7 +456,7 @@ const CreateRecipe = ({
         description: `Your recipe has been ${isEditing ? "updated" : "saved"}`,
       });
       resetRecipe();
-      navigate("/admin");
+      navigate("/admin/recipemanagement");
     } catch (error: any) {
       console.error(
         `Error ${isEditing ? "updating" : "saving"} recipe:`,

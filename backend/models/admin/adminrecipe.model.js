@@ -60,7 +60,23 @@ const adminrecipeSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],
-    default: 'pending'
+    default: 'pending',
+  },
+  openai_generated_content: {
+    type: Object,
+    default: null,
+    properties: {
+      instructions: { type: String },
+      nutrition: {
+        type: Object,
+        properties: {
+          protein: { type: Number },
+          calories: { type: Number },
+          carbs: { type: Number },
+          fat: { type: Number },
+        },
+      },
+    },
   },
   created_at: {
     type: Date,
@@ -77,4 +93,4 @@ adminrecipeSchema.pre('save', function (next) {
   next();
 });
 
-module.exports = mongoose.model('AdminRecipe', adminrecipeSchema);
+module.exports = mongoose.model('AdminRecipe', adminrecipeSchema);  

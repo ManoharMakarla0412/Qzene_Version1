@@ -5,7 +5,7 @@ import "./App.css";
 
 // Context Providers
 import { AuthProvider } from "./contexts/AuthContext";
-import { RecipeProvider } from "./contexts/RecipeContext"; // Add this import
+import { RecipeProvider } from "./contexts/RecipeContext";
 import { ReactQueryProvider } from "./providers/query-client-provider";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -20,7 +20,7 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 
 // Admin
-import AdminDashboard from "./admin/pages/Index";
+import AdminLayout from "./admin/pages/Index"; // This will be our admin layout wrapper
 import CreateRecipe from "./admin/components/createRecipe/createRecipe";
 
 // Utilities
@@ -35,8 +35,6 @@ function App() {
             <Router>
               <AuthProvider>
                 <RecipeProvider>
-                  {" "}
-                  {/* Wrap with RecipeProvider */}
                   <div className="flex-1">
                     <Routes>
                       {/* ✅ User Routes */}
@@ -47,15 +45,17 @@ function App() {
                       <Route path="/devices" element={<DevicesPage />} />
                       <Route path="/recipes/:id" element={<RecipeDetail />} />
 
-                      {/* ✅ Admin Routes (Protected) */}
+                      {/* ✅ Admin Routes (Protected with Nested Routing) */}
                       <Route
-                        path="/admin"
+                        path="/admin/*"
                         element={
                           <ProtectedRoute adminOnly={true}>
-                            <AdminDashboard />
+                            <AdminLayout />
                           </ProtectedRoute>
                         }
                       />
+
+                      {/* ✅ Standalone Admin Routes */}
                       <Route
                         path="/admin/create-recipe"
                         element={
@@ -84,7 +84,6 @@ function App() {
                     richColors
                     toastOptions={{
                       className:
-                        // Adjust the width as needed, use padding for flexible height
                         "w-[400px] p-4 text-sm flex items-center shadow-lg rounded-lg",
                     }}
                   />

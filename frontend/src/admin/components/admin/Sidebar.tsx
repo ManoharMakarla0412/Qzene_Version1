@@ -7,7 +7,6 @@ import {
   Users,
   Settings,
   Menu,
-  X,
   Package,
   UserCheck,
   ArrowLeft,
@@ -22,14 +21,54 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, description: "Overview & Analytics" },
-  { id: "recipes", label: "Recipes", icon: ChefHat, description: "Recipe Management" },
-  { id: "verify-recipes", label: "Verify Recipe", icon: CheckCircle, description: "Recipe Verification" },
-  { id: "ingredients", label: "Ingredients", icon: Package, description: "Ingredient Management" },
-  { id: "orders", label: "Orders", icon: ShoppingCart, description: "Order Tracking" },
-  { id: "chefs", label: "Chefs", icon: Users, description: "Chef Management" },
-  { id: "users", label: "Users", icon: UserCheck, description: "User Management" },
-  { id: "enums", label: "Enums", icon: Settings, description: "System Configuration" },
+  { 
+    id: "admin/dashboard", 
+    label: "Dashboard", 
+    icon: LayoutDashboard, 
+    description: "Overview & Analytics" 
+  },
+  { 
+    id: "admin/recipemanagement", 
+    label: "Recipes", 
+    icon: ChefHat, 
+    description: "Recipe Management" 
+  },
+  { 
+    id: "admin/recipeverification", 
+    label: "Verify Recipe", 
+    icon: CheckCircle, 
+    description: "Recipe Verification" 
+  },
+  { 
+    id: "admin/ingredientmanagement", 
+    label: "Ingredients", 
+    icon: Package, 
+    description: "Ingredient Management" 
+  },
+  { 
+    id: "admin/ordermanagement", 
+    label: "Orders", 
+    icon: ShoppingCart, 
+    description: "Order Tracking" 
+  },
+  { 
+    id: "admin/chefmanagement", 
+    label: "Chefs", 
+    icon: Users, 
+    description: "Chef Management" 
+  },
+  { 
+    id: "admin/usermanagement", 
+    label: "Users", 
+    icon: UserCheck, 
+    description: "User Management" 
+  },
+  { 
+    id: "admin/enumsmanagement", 
+    label: "Enums", 
+    icon: Settings, 
+    description: "System Configuration" 
+  },
 ];
 
 export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
@@ -64,9 +103,9 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? (
-            <Menu className="h-5 w-5 text-white" />
+            <Menu className="h-5 w-5 text-[#CD1265] hover:text-white" />
           ) : (
-            <ArrowLeft className="h-5 w-5 text-white" />
+            <ArrowLeft className="h-5 w-5 text-[#CD1265] hover:text-white" />
           )}
         </button>
       </div>
@@ -95,9 +134,9 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
                   className={cn("h-5 w-5 flex-shrink-0", !isCollapsed && "mr-3")}
                 />
                 {!isCollapsed && (
-                  <div className="flex-1 text-left">
-                    <div className="font-medium text-[#CD1265]">{item.label}</div>
-                    <div className="text-xs text-[#CD1265]/70 mt-1">
+                  <div className={cn("flex-1 text-left", isActive ? "text-white" : "text-[#CD1265]")}>
+                    <div className="font-medium ">{item.label}</div>
+                    <div className="text-xs  mt-1">
                       {item.description}
                     </div>
                   </div>

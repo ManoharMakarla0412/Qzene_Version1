@@ -1,4 +1,47 @@
 const Recipe = require("../../models/admin/adminrecipe.model");
+const openAIService = require('../../services/openai.service');
+
+exports.generateRecipeDetails = async (req, res) => {
+  try {
+    const { recipeId } = req.params;
+    const recipe = await Recipe.findById(recipeId);
+    
+    console.log('Recipe found:', recipe);
+    if (!recipe) {
+      return res.status(404).json({
+        success: false,
+        message: 'Recipe not found',
+      });
+    }
+
+    const result = await openAIService.generateRecipeDetails(recipe); 
+    console.log('OpenAI result:', result);
+
+    recipe.openai_generated_content = {
+      instructions: result.instructions,
+      nutrition: {
+        protein: result.nutrition.protein || 0,
+        calories: result.nutrition.calories || 0,
+        carbs: result.nutrition.carbs || 0,
+        fat: result.nutrition.fat || 0,
+      },
+    };
+    
+    await recipe.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Recipe details generated successfully',
+      data: recipe,
+    });
+  } catch (error) {
+    console.error('Controller error:', error);
+    return res.status(500).json({
+      success: false,
+      message: `Server error: ${error.message}`,
+    });
+  }
+};
 
 // No changes needed for createRecipe, it is already correct.
 exports.createRecipe = async (req, res) => {
@@ -191,7 +234,7 @@ exports.updateRecipe = async (req, res) => {
 
 exports.getAllRecipes = async (req, res) => {
   try {
-    const recipes = await Recipe.find().select("-__v");
+    const recipes = await Recipe.find();
     res.status(200).json({
       success: true,
       message: "Recipes fetched successfully",

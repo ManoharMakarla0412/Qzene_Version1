@@ -11,10 +11,21 @@ export const IngredientManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [categories, setCategories] = useState(["All Categories"]);
-  const [ingredients, setIngredients] = useState([]); // State for fetched ingredients
-  const [stats, setStats] = useState({ total: 0, ingredientsCount: 0, spicesCount: 0, oilsCount: 0 }); // Dynamic stats
+  const [ingredients, setIngredients] = useState([]);
+  const [stats, setStats] = useState({ total: 0, ingredientsCount: 0, spicesCount: 0, oilsCount: 0 });
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newIngredient, setNewIngredient] = useState({ name: "", type: "", image: null });
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [newIngredient, setNewIngredient] = useState({
+    name: "",
+    type: "",
+    image: null,
+    prep_method: [],
+    allergen: [],
+    nutrient: { protein: 0, calories: 0, carbs: 0, fat: 0 },
+    brand: "",
+    description: "",
+  });
+  const [editIngredient, setEditIngredient] = useState(null);
   const [loading, setLoading] = useState(false);
   const category = "Food_Items";
 
@@ -41,14 +52,12 @@ export const IngredientManagement = () => {
     fetchCategories();
   }, []);
 
-  // Fetch ingredients on mount and after adding a new ingredient
+  // Fetch ingredients
   const fetchIngredients = async () => {
     try {
       const response = await fetch(`${API_URL}/api/v1/admin/ingredients`, {
         method: 'GET',
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: 'include',
       });
       if (!response.ok) {
@@ -59,8 +68,8 @@ export const IngredientManagement = () => {
       const data = await response.json();
       const fetchedIngredients = data.data.map(ingredient => ({
         ...ingredient,
-        id: ingredient._id, // Map _id to id for consistency
-        usageCount: 0, // Placeholder since usageCount isn't in the API response
+        id: ingredient._id,
+        usageCount: 0, // Placeholder
       }));
 
       // Calculate statistics
@@ -93,7 +102,7 @@ export const IngredientManagement = () => {
       "Spices": "bg-orange-100 text-orange-800",
       "Ingredients": "bg-green-100 text-green-800",
     };
-    return <Badge className={colors[category as keyof typeof colors] || "bg-gray-100 text-gray-800"}>{category}</Badge>;
+    return <Badge className={colors[category] || "bg-gray-100 text-gray-800"}>{category}</Badge>;
   };
 
   const handleAddIngredient = async (e: React.FormEvent) => {
@@ -104,11 +113,14 @@ export const IngredientManagement = () => {
       const formData = new FormData();
       formData.append('name', newIngredient.name);
       formData.append('type', newIngredient.type);
-      if (newIngredient.image) {
-        formData.append('image', newIngredient.image);
-      }
+      if (newIngredient.image) formData.append('image', newIngredient.image);
+      formData.append('prep_method', JSON.stringify(newIngredient.prep_method));
+      formData.append('allergen', JSON.stringify(newIngredient.allergen));
+      formData.append('nutrient', JSON.stringify(newIngredient.nutrient));
+      formData.append('brand', newIngredient.brand);
+      formData.append('description', newIngredient.description);
 
-      const response = await fetch('${API_URL}/api/v1/admin/ingredients', {
+      const response = await fetch(`${API_URL}/api/v1/admin/ingredients`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -122,8 +134,80 @@ export const IngredientManagement = () => {
 
       toast.success('Ingredient added successfully!');
       setShowAddForm(false);
-      setNewIngredient({ name: "", type: "", image: null });
-      fetchIngredients(); // Refresh the ingredients list
+      setNewIngredient({
+        name: "",
+        type: "",
+        image: null,
+        prep_method: [],
+        allergen: [],
+        nutrient: { protein: 0, calories: 0, carbs: 0, fat: 0 },
+        brand: "",
+        description: "",
+      });
+      fetchIngredients();
+    } catch {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditIngredient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('name', editIngredient.name);
+      formData.append('type', editIngredient.type);
+      if (editIngredient.image && typeof editIngredient.image !== 'string') {
+        formData.append('image', editIngredient.image);
+      }
+      formData.append('prep_method', JSON.stringify(editIngredient.prep_method));
+      formData.append('allergen', JSON.stringify(editIngredient.allergen));
+      formData.append('nutrient', JSON.stringify(editIngredient.nutrient));
+      formData.append('brand', editIngredient.brand);
+      formData.append('description', editIngredient.description);
+
+      const response = await fetch(`${API_URL}/api/v1/admin/ingredients/${editIngredient.id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Failed to update ingredient');
+        return;
+      }
+
+      toast.success('Ingredient updated successfully!');
+      setShowEditForm(false);
+      setEditIngredient(null);
+      fetchIngredients();
+    } catch {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteIngredient = async (id: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/v1/admin/ingredients/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Failed to delete ingredient');
+        return;
+      }
+
+      toast.success('Ingredient deleted successfully!');
+      fetchIngredients();
     } catch {
       toast.error('Something went wrong. Please try again.');
     } finally {
@@ -262,11 +346,96 @@ export const IngredientManagement = () => {
                     accept="image/jpeg,image/png,image/webp"
                     onChange={(e) => setNewIngredient({ ...newIngredient, image: e.target.files?.[0] || null })}
                     className="border-gray-300"
-                    required
                   />
                   {newIngredient.image && (
                     <p className="text-xs text-gray-500 mt-1">{newIngredient.image.name}</p>
                   )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Preparation Methods (comma-separated)</label>
+                  <Input
+                    placeholder="e.g., chop, grate"
+                    value={newIngredient.prep_method.join(',')}
+                    onChange={(e) => setNewIngredient({
+                      ...newIngredient,
+                      prep_method: e.target.value.split(',').map(item => item.trim()).filter(Boolean),
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Allergens (comma-separated)</label>
+                  <Input
+                    placeholder="e.g., nuts, dairy"
+                    value={newIngredient.allergen.join(',')}
+                    onChange={(e) => setNewIngredient({
+                      ...newIngredient,
+                      allergen: e.target.value.split(',').map(item => item.trim()).filter(Boolean),
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Brand</label>
+                  <Input
+                    placeholder="Enter brand name"
+                    value={newIngredient.brand}
+                    onChange={(e) => setNewIngredient({ ...newIngredient, brand: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                  <Input
+                    placeholder="Enter description"
+                    value={newIngredient.description}
+                    onChange={(e) => setNewIngredient({ ...newIngredient, description: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nutrient: Protein (g)</label>
+                  <Input
+                    type="number"
+                    placeholder="Protein"
+                    value={newIngredient.nutrient.protein}
+                    onChange={(e) => setNewIngredient({
+                      ...newIngredient,
+                      nutrient: { ...newIngredient.nutrient, protein: Number(e.target.value) || 0 },
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nutrient: Calories (kcal)</label>
+                  <Input
+                    type="number"
+                    placeholder="Calories"
+                    value={newIngredient.nutrient.calories}
+                    onChange={(e) => setNewIngredient({
+                      ...newIngredient,
+                      nutrient: { ...newIngredient.nutrient, calories: Number(e.target.value) || 0 },
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nutrient: Carbs (g)</label>
+                  <Input
+                    type="number"
+                    placeholder="Carbs"
+                    value={newIngredient.nutrient.carbs}
+                    onChange={(e) => setNewIngredient({
+                      ...newIngredient,
+                      nutrient: { ...newIngredient.nutrient, carbs: Number(e.target.value) || 0 },
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nutrient: Fat (g)</label>
+                  <Input
+                    type="number"
+                    placeholder="Fat"
+                    value={newIngredient.nutrient.fat}
+                    onChange={(e) => setNewIngredient({
+                      ...newIngredient,
+                      nutrient: { ...newIngredient.nutrient, fat: Number(e.target.value) || 0 },
+                    })}
+                  />
                 </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
@@ -275,6 +444,153 @@ export const IngredientManagement = () => {
                 </Button>
                 <Button type="submit" className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90" disabled={loading}>
                   {loading ? 'Adding...' : 'Add Ingredient'}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Edit Ingredient Form */}
+      {showEditForm && editIngredient && (
+        <Card className="qzene-card border-2 border-[#F25A38]">
+          <CardHeader>
+            <CardTitle className="text-[#F25A38]">Edit Ingredient</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleEditIngredient} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                  <Input
+                    placeholder="Enter ingredient name"
+                    value={editIngredient.name}
+                    onChange={(e) => setEditIngredient({ ...editIngredient, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                  <select
+                    value={editIngredient.type}
+                    onChange={(e) => setEditIngredient({ ...editIngredient, type: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F25A38]"
+                    required
+                  >
+                    <option value="">Select Type</option>
+                    {categories.slice(1).map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+                  <Input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => setEditIngredient({ ...editIngredient, image: e.target.files?.[0] || null })}
+                    className="border-gray-300"
+                  />
+                  {editIngredient.image && typeof editIngredient.image === 'string' && (
+                    <img src={editIngredient.image} alt="Current" className="w-16 h-16 object-cover rounded-lg mt-2" />
+                  )}
+                  {editIngredient.image && typeof editIngredient.image !== 'string' && (
+                    <p className="text-xs text-gray-500 mt-1">{editIngredient.image.name}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Preparation Methods (comma-separated)</label>
+                  <Input
+                    placeholder="e.g., chop, grate"
+                    value={editIngredient.prep_method.join(',')}
+                    onChange={(e) => setEditIngredient({
+                      ...editIngredient,
+                      prep_method: e.target.value.split(',').map(item => item.trim()).filter(Boolean),
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Allergens (comma-separated)</label>
+                  <Input
+                    placeholder="e.g., nuts, dairy"
+                    value={editIngredient.allergen.join(',')}
+                    onChange={(e) => setEditIngredient({
+                      ...editIngredient,
+                      allergen: e.target.value.split(',').map(item => item.trim()).filter(Boolean),
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Brand</label>
+                  <Input
+                    placeholder="Enter brand name"
+                    value={editIngredient.brand}
+                    onChange={(e) => setEditIngredient({ ...editIngredient, brand: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                  <Input
+                    placeholder="Enter description"
+                    value={editIngredient.description}
+                    onChange={(e) => setEditIngredient({ ...editIngredient, description: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nutrient: Protein (g)</label>
+                  <Input
+                    type="number"
+                    placeholder="Protein"
+                    value={editIngredient.nutrient.protein}
+                    onChange={(e) => setEditIngredient({
+                      ...editIngredient,
+                      nutrient: { ...editIngredient.nutrient, protein: Number(e.target.value) || 0 },
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nutrient: Calories (kcal)</label>
+                  <Input
+                    type="number"
+                    placeholder="Calories"
+                    value={editIngredient.nutrient.calories}
+                    onChange={(e) => setEditIngredient({
+                      ...editIngredient,
+                      nutrient: { ...editIngredient.nutrient, calories: Number(e.target.value) || 0 },
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nutrient: Carbs (g)</label>
+                  <Input
+                    type="number"
+                    placeholder="Carbs"
+                    value={editIngredient.nutrient.carbs}
+                    onChange={(e) => setEditIngredient({
+                      ...editIngredient,
+                      nutrient: { ...editIngredient.nutrient, carbs: Number(e.target.value) || 0 },
+                    })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nutrient: Fat (g)</label>
+                  <Input
+                    type="number"
+                    placeholder="Fat"
+                    value={editIngredient.nutrient.fat}
+                    onChange={(e) => setEditIngredient({
+                      ...editIngredient,
+                      nutrient: { ...editIngredient.nutrient, fat: Number(e.target.value) || 0 },
+                    })}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <Button type="button" variant="outline" onClick={() => setShowEditForm(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90" disabled={loading}>
+                  {loading ? 'Updating...' : 'Update Ingredient'}
                 </Button>
               </div>
             </form>
@@ -313,12 +629,46 @@ export const IngredientManagement = () => {
                   <span className="text-gray-500">Created by:</span>
                   <span className="font-medium">{ingredient.createdBy}</span>
                 </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Brand:</span>
+                  <span className="font-medium">{ingredient.brand || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Allergens:</span>
+                  <span className="font-medium">{ingredient.allergen.length ? ingredient.allergen.join(', ') : 'None'}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Prep Methods:</span>
+                  <span className="font-medium">{ingredient.prep_method.length ? ingredient.prep_method.join(', ') : 'None'}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Description:</span>
+                  <span className="font-medium">{ingredient.description || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Nutrients:</span>
+                  <span className="font-medium">
+                    {ingredient.nutrient ? `${ingredient.nutrient.protein}g Protein, ${ingredient.nutrient.calories}kcal, ${ingredient.nutrient.carbs}g Carbs, ${ingredient.nutrient.fat}g Fat` : 'N/A'}
+                  </span>
+                </div>
                 <div className="flex justify-between pt-3 border-t space-x-2">
-                  <Button size="sm" className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90 flex-1">
+                  <Button
+                    size="sm"
+                    className="bg-[#CD1265] text-white hover:bg-[#CD1265]/90 flex-1"
+                    onClick={() => {
+                      setEditIngredient({ ...ingredient, image: ingredient.image });
+                      setShowEditForm(true);
+                    }}
+                  >
                     <Edit className="h-3 w-3 mr-1" />
                     Edit
                   </Button>
-                  <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleDeleteIngredient(ingredient.id)}
+                  >
                     <Trash2 className="h-3 w-3 mr-1" />
                     Delete
                   </Button>

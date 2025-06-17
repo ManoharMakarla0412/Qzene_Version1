@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Sidebar } from "../components/admin/Sidebar";
 import { Dashboard } from "../components/admin/Dashboard";
 import { RecipeManagement } from "../components/admin/RecipeManagement";
@@ -14,11 +15,29 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "react-hot-toast";
 import { API_URL } from "@/lib/constants";
 
-const Index = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
+// Route-based component mapping for titles
+const routeTitles: Record<string, string> = {
+  "/admin": "Dashboard",
+  "/admin/dashboard": "Dashboard",
+  "/admin/recipemanagement": "Recipe Management",
+  "/admin/recipeverification": "Recipe Verification",
+  "/admin/ingredientmanagement": "Ingredient Management",
+  "/admin/ordermanagement": "Order Management",
+  "/admin/chefmanagement": "Chef Management",
+  "/admin/usermanagement": "User Management",
+  "/admin/enumsmanagement": "Enums Management"
+};
+
+const AdminLayout = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Get current route for sidebar active state
+  const currentRoute = location.pathname === "/admin" ? "/admin/dashboard" : location.pathname;
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -30,68 +49,61 @@ const Index = () => {
             headers: { "Content-Type": "application/json" },
           }
         );
-        // Assuming you want to do something with the response, e.g., setData(await response.json())
-      } catch (error) {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      } catch (error: any) {
         toast.error("Failed to fetch data");
         if (error.response?.status === 401 || error.response?.status === 403) {
           logout();
         }
       }
     };
+
     if (user?.roles.includes("admin")) {
       fetchData();
     }
   }, [user, logout]);
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return <Dashboard />;
-      case "recipes":
-        return <RecipeManagement />;
-      case "verify-recipes":
-        return <RecipeVerification />;
-      case "ingredients":
-        return <IngredientManagement />;
-      case "orders":
-        return <OrderManagement />;
-      case "chefs":
-        return <ChefManagement />;
-      case "users":
-        return <UserManagement />;
-      case "enums":
-        return <EnumsManagement />;
-      default:
-        return <Dashboard />;
-    }
+  // Click outside handler for dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Handle sidebar navigation
+  const handleNavigate = (route: string) => {
+    // Convert the sidebar route format to actual URL paths
+    const routeMap: Record<string, string> = {
+      "admin/dashboard": "/admin/dashboard",
+      "admin/recipemanagement": "/admin/recipemanagement",
+      "admin/recipeverification": "/admin/recipeverification",
+      "admin/ingredientmanagement": "/admin/ingredientmanagement",
+      "admin/ordermanagement": "/admin/ordermanagement",
+      "admin/chefmanagement": "/admin/chefmanagement",
+      "admin/usermanagement": "/admin/usermanagement",
+      "admin/enumsmanagement": "/admin/enumsmanagement"
+    };
+
+    const targetPath = routeMap[route] || "/admin/dashboard";
+    navigate(targetPath);
   };
 
-  const getPageTitle = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return "Dashboard";
-      case "recipes":
-        return "Recipe Management";
-      case "verify-recipes":
-        return "Recipe Verification";
-      case "ingredients":
-        return "Ingredient Management";
-      case "orders":
-        return "Order Management";
-      case "chefs":
-        return "Chef Management";
-      case "users":
-        return "User Management";
-      case "enums":
-        return "Enums Management";
-      default:
-        return "Dashboard";
-    }
-  };
+  // Get page title based on current route
+  const pageTitle = routeTitles[currentRoute] || "Admin Dashboard";
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar 
+        activeTab={currentRoute.replace("/", "")} // Remove leading slash for sidebar
+        setActiveTab={handleNavigate} 
+      />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
@@ -99,8 +111,11 @@ const Index = () => {
           <div className="flex items-center justify-between h-full">
             <div>
               <h1 className="text-xl font-semibold text-gray-900">
-                {getPageTitle()}
+                {pageTitle}
               </h1>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {currentRoute}
+              </p>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -111,16 +126,18 @@ const Index = () => {
                   className="pl-10 w-64 bg-gray-50 border-gray-200 focus:bg-white"
                 />
               </div>
+              
               <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
                 <Bell className="h-5 w-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-[#F25A38] rounded-full"></span>
               </button>
+              
               <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
                 <Settings className="h-5 w-5" />
               </button>
+              
               {/* User Avatar with Dropdown */}
               <div className="relative" ref={dropdownRef}>
-                {/* Avatar Button */}
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="w-10 h-10 rounded-full bg-gradient-to-r from-[#F25A38] to-[#CD1265] 
@@ -145,12 +162,11 @@ const Index = () => {
                     <button
                       onClick={() => {
                         logout();
-                        setIsDropdownOpen(false); // Close dropdown after action
+                        setIsDropdownOpen(false);
                       }}
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                       role="menuitem"
                     >
-                      {/* Logout Icon */}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="16"
@@ -169,7 +185,6 @@ const Index = () => {
                       </svg>
                       Logout
                     </button>
-                    {/* You can add more links here, like "Profile" or "Settings" */}
                   </div>
                 )}
               </div>
@@ -177,11 +192,20 @@ const Index = () => {
           </div>
         </header>
 
-        {/* Main Content */}
+        {/* Main Content with Nested Routes */}
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-7xl mx-auto">
-            {/* Breadcrumbs could go here */}
-            {renderContent()}
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/recipemanagement" element={<RecipeManagement />} />
+              <Route path="/recipeverification" element={<RecipeVerification />} />
+              <Route path="/ingredientmanagement" element={<IngredientManagement />} />
+              <Route path="/ordermanagement" element={<OrderManagement />} />
+              <Route path="/chefmanagement" element={<ChefManagement />} />
+              <Route path="/usermanagement" element={<UserManagement />} />
+              <Route path="/enumsmanagement" element={<EnumsManagement />} />
+            </Routes>
           </div>
         </main>
       </div>
@@ -189,4 +213,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default AdminLayout;

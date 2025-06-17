@@ -17,7 +17,12 @@ export const RecipeProvider = ({ children }: { children: ReactNode }) => {
   const fetchRecipes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/recipes`);
+      const res = await fetch(`${API_URL}/api/v1/admin/recipes`,{
+        method: "GET",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-cache"
+      });
       const data = await res.json();
       setRecipes(Array.isArray(data) ? data : data.data || []);
     } catch (e) {
