@@ -145,33 +145,40 @@ const SignupForm = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      const response = await fetch(`${API_URL}/api/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password, firstName, lastName }),
-      });
+  try {
+    const response = await fetch(`${API_URL}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        email,
+        password,
+        firstName,
+        lastName,
+        username: email.split('@')[0],  // optional default username logic
+        roles: ['admin'], // default role
+      }),
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        toast.error(errorData.message || 'Signup failed');
-        return;
-      }
-
-      await login(email, password);
-      toast.success('Account created! Welcome to Qzene!');
-      navigate('/');
-    } catch {
-      toast.error('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      const errorData = await response.json();
+      toast.error(errorData.message || 'Signup failed');
+      return;
     }
-  };
+
+    await login(email, password);
+    toast.success('Account created! Welcome to Qzene!');
+    navigate('/');
+  } catch {
+    toast.error('Something went wrong. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="p-6 space-y-4">
