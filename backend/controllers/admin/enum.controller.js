@@ -57,4 +57,75 @@ const getAllEnums = async (req, res) => {
   }
 };
 
-module.exports = { createEnum, getEnumsByCategory, deleteEnum, getAllCategories,getAllEnums };
+const updateEnum = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { category, value } = req.body;
+    
+    // Build update object with only provided fields
+    const updateData = {};
+    if (category) updateData.category = category;
+    if (value) updateData.value = value;
+    
+    // Add updatedBy and updatedAt fields
+    updateData.updatedBy = req.user._id;
+    updateData.updatedAt = new Date();
+    
+    const enumValue = await EnumValue.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('category value updatedBy updatedAt');
+    
+    if (!enumValue) {
+      return sendError(res, 'Enum not found', 404);
+    }
+    
+    sendResponse(res, enumValue, 'Enum updated');
+  } catch (error) {
+    console.error('Error in updateEnum:', error.message);
+    sendError(res, error.message, 400);
+  }
+};
+
+const updateCategory = async (req, res) => {
+  try {
+    const { oldCategory, newCategory } = req.body;
+    
+    if (!oldCategory || !newCategory) {
+      return sendError(res, 'Both oldCategory and newCategory are required', 400);
+    }
+    
+    if (oldCategory === newCategory) {
+      return sendError(res, 'Old and new categories cannot be the same', 400);
+    }
+    
+    // Check if old category exists
+    const existingEnums = await EnumValue.find({ category: oldCategory });
+    if (existingEnums.length === 0) {
+      return sendError(res, 'Old category not found', 404);
+    }
+    
+    // Update all enums with the old category
+    const result = await EnumValue.updateMany(
+      { category: oldCategory },
+      { 
+        category: newCategory,
+        updatedBy: req.user._id,
+        updatedAt: new Date()
+      }
+    );
+    
+    sendResponse(res, {
+      modifiedCount: result.modifiedCount,
+      oldCategory,
+      newCategory
+    }, `Category updated from '${oldCategory}' to '${newCategory}'`);
+    
+  } catch (error) {
+    console.error('Error in updateCategory:', error.message);
+    sendError(res, error.message, 500);
+  }
+};
+
+module.exports = { createEnum, getEnumsByCategory, deleteEnum, getAllCategories,getAllEnums, updateEnum, updateCategory };

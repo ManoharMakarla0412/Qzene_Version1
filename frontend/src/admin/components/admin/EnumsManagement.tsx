@@ -19,8 +19,19 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Settings, Loader2 } from "lucide-react";
-import { format, isValid } from "date-fns";
+import { Plus, Settings, Loader2, Edit2, Trash2 } from "lucide-react";
+// Date formatting helper functions
+const formatDate = (date: Date): string => {
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+const isValidDate = (date: Date): boolean => {
+  return date instanceof Date && !isNaN(date.getTime());
+};
 import { API_URL } from "@/lib/constants";
 
 // --- Type Definitions ---
@@ -66,6 +77,44 @@ const api = {
     }
     return response.json();
   },
+  updateEnum: async (id: string, value: string): Promise<any> => {
+    const response = await fetch(`${API_URL}/api/v1/admin/enums/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ value }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update enum");
+    }
+    return response.json();
+  },
+  updateCategory: async (oldCategory: string, newCategory: string): Promise<any> => {
+    const response = await fetch(`${API_URL}/api/v1/admin/enums/categories/update`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ newCategory, oldCategory }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update category");
+    }
+    return response.json();
+  },
+  deleteEnum: async (id: string): Promise<any> => {
+    const response = await fetch(`${API_URL}/api/v1/admin/enums/${id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to delete enum");
+    }
+    return response.json();
+  },
 };
 
 // --- Helper Function ---
@@ -83,8 +132,12 @@ export const EnumsManagement = () => {
   // Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
+  const [isEditValueModalOpen, setIsEditValueModalOpen] = useState(false);
   const [newValue, setNewValue] = useState("");
   const [newCategory, setNewCategory] = useState("");
+  const [editingCategory, setEditingCategory] = useState<string>("");
+  const [editingValue, setEditingValue] = useState<EnumItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- Data Fetching ---
@@ -140,6 +193,20 @@ export const EnumsManagement = () => {
     setIsAddModalOpen(true);
   };
 
+  const handleOpenEditCategoryModal = (category: string) => {
+    setEditingCategory(category);
+    setNewCategory(category);
+    setIsSubmitting(false);
+    setIsEditCategoryModalOpen(true);
+  };
+
+  const handleOpenEditValueModal = (enumItem: EnumItem) => {
+    setEditingValue(enumItem);
+    setNewValue(enumItem.value);
+    setIsSubmitting(false);
+    setIsEditValueModalOpen(true);
+  };
+
   const handleModalSubmit = async (mode: "create" | "add") => {
     const category = mode === 'add' ? selectedCategory! : newCategory;
     
@@ -178,6 +245,96 @@ export const EnumsManagement = () => {
     }
   };
 
+  const handleEditCategory = async () => {
+    if (!editingCategory || !newCategory.trim()) {
+      toast.warning("Category name is required.");
+      return;
+    }
+
+    const finalCategory = capitalizeFirstLetter(newCategory.trim());
+    
+    if (finalCategory === editingCategory) {
+      toast.info("No changes detected.");
+      setIsEditCategoryModalOpen(false);
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      await api.updateCategory(editingCategory, finalCategory);
+      toast.success(`Category renamed from "${editingCategory}" to "${finalCategory}"`);
+      
+      // Update local state
+      setCategories(prev => prev.map(cat => cat === editingCategory ? finalCategory : cat));
+      
+      // Update selected category if it was the one being edited
+      if (selectedCategory === editingCategory) {
+        setSelectedCategory(finalCategory);
+      }
+      
+      setIsEditCategoryModalOpen(false);
+      
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update category.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditValue = async () => {
+    if (!editingValue || !newValue.trim()) {
+      toast.warning("Value is required.");
+      return;
+    }
+
+    const finalValue = capitalizeFirstLetter(newValue.trim());
+    
+    if (finalValue === editingValue.value) {
+      toast.info("No changes detected.");
+      setIsEditValueModalOpen(false);
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      await api.updateEnum(editingValue._id, finalValue);
+      toast.success(`Value updated from "${editingValue.value}" to "${finalValue}"`);
+      
+      // Update local state
+      setEnums(prev => prev.map(item => 
+        item._id === editingValue._id 
+          ? { ...item, value: finalValue }
+          : item
+      ));
+      
+      setIsEditValueModalOpen(false);
+      
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update value.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteValue = async (enumItem: EnumItem) => {
+    if (!confirm(`Are you sure you want to delete "${enumItem.value}"?`)) {
+      return;
+    }
+
+    try {
+      await api.deleteEnum(enumItem._id);
+      toast.success(`"${enumItem.value}" has been deleted.`);
+      
+      // Update local state
+      setEnums(prev => prev.filter(item => item._id !== enumItem._id));
+      
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete value.");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -205,17 +362,34 @@ export const EnumsManagement = () => {
             ) : (
               <div className="space-y-2">
                 {categories.map((category) => (
-                  <button
+                  <div
                     key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`w-full text-left p-3 rounded-lg transition-colors ${
+                    className={`group flex items-center justify-between p-3 rounded-lg transition-colors ${
                       selectedCategory === category
                         ? "bg-[#F25A38] text-white font-semibold border-l-4 border-[#F25A38]"
                         : "bg-gray-50 hover:bg-[#F25A38] hover:text-white text-gray-700"
                     }`}
                   >
-                    {category.replace(/_/g, " ")}
-                  </button>
+                    <button
+                      onClick={() => setSelectedCategory(category)}
+                      className="flex-1 text-left"
+                    >
+                      {category.replace(/_/g, " ")}
+                    </button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className={`opacity-0 group-hover:opacity-100 h-6 w-6 p-0 ${
+                        selectedCategory === category ? 'hover:bg-white/20' : 'hover:bg-gray-200'
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenEditCategoryModal(category);
+                      }}
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 ))}
               </div>
             )}
@@ -267,13 +441,33 @@ export const EnumsManagement = () => {
                     {enums.map((item) => {
                       const date = item.createdAt ? new Date(item.createdAt) : null;
                       return (
-                        <li key={item._id} className="flex items-center justify-between py-3">
-                          <span className="font-medium text-gray-800">{item.value}</span>
-                          {date && isValid(date) && (
-                            <span className="text-xs text-gray-500">
-                              Added on {format(date, 'PP')}
-                            </span>
-                          )}
+                        <li key={item._id} className="group flex items-center justify-between py-3 hover:bg-gray-50 px-2 rounded-lg transition-colors">
+                          <div className="flex-1">
+                            <span className="font-medium text-gray-800">{item.value}</span>
+                            {date && isValidDate(date) && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                Added on {formatDate(date)}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                              onClick={() => handleOpenEditValueModal(item)}
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
+                              onClick={() => handleDeleteValue(item)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </li>
                       );
                     })}
@@ -359,6 +553,80 @@ export const EnumsManagement = () => {
             <Button onClick={() => handleModalSubmit('add')} disabled={isSubmitting} className="bg-[#CD1265] text-white">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Add Value
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* --- MODAL FOR EDITING CATEGORY NAME --- */}
+      <Dialog open={isEditCategoryModalOpen} onOpenChange={setIsEditCategoryModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Category</DialogTitle>
+             <DialogDescription>
+                Update the category name. This will affect all values in this category.
+              </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2 pb-4">
+            <div className="space-y-2">
+              <Label htmlFor="category-edit">Category Name</Label>
+              <Input
+                id="category-edit"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                placeholder="Enter new category name"
+                onKeyPress={(e) => e.key === 'Enter' && handleEditCategory()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleEditCategory} disabled={isSubmitting} className="bg-[#CD1265] text-white">
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Update Category
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* --- MODAL FOR EDITING VALUE --- */}
+      <Dialog open={isEditValueModalOpen} onOpenChange={setIsEditValueModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Value</DialogTitle>
+             <DialogDescription>
+                Update this enum value in the "{editingValue?.category}" category.
+              </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2 pb-4">
+            <div className="space-y-2">
+              <Label htmlFor="category-edit-value">Category</Label>
+              <Input 
+                id="category-edit-value" 
+                value={editingValue?.category?.replace(/_/g, " ") ?? ""} 
+                disabled 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="value-edit">Value</Label>
+              <Input
+                id="value-edit"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                placeholder="Enter new value"
+                onKeyPress={(e) => e.key === 'Enter' && handleEditValue()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleEditValue} disabled={isSubmitting} className="bg-[#CD1265] text-white">
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Update Value
             </Button>
           </DialogFooter>
         </DialogContent>
